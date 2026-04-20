@@ -1,142 +1,51 @@
-![logo_ironhack_blue 7](https://user-images.githubusercontent.com/23629340/40541063-a07a0a8a-601a-11e8-91b5-2f13e4e6b441.png)
+# Heat-Pulse
+### Team sPySci (Spicy) | Weather Intelligence Pipeline
 
-# Project 1: Weather Intelligence Pipeline — Can We Trust This Data?
 
-## Overview
+## 1. Problem Statement
+**Objective:** How can we predict "Extreme Heat Events" (EHE) to prevent power generator burn-outs and optimize grid load management?
 
-Over the next two weeks you will build a complete, end-to-end **weather intelligence pipeline**. You will ingest historical and real-time weather data from the Open-Meteo API, store it in a local DuckDB analytical database, perform rigorous statistical analysis, and build a predictive model — all while critically evaluating whether the data can be trusted.
+This project develops an end-to-end weather intelligence pipeline to identify days exceeding the 90th percentile of historical summer temperatures. Our goal is to provide a 10-day risk assessment tool for **Azerenerji** and industrial facility managers in Azerbaijan to prevent technical failures similar to those seen in 2018 and 2024.
 
-**Why weather?** Weather data is publicly available, refreshed daily, has genuine quality challenges (sensor gaps, interpolation artefacts, seasonal non-stationarity), and is the backbone of decisions in energy, agriculture, logistics, and insurance. It is the perfect playground for asking *"Can we trust this data?"*
+---
 
-## Project Requirements
+## 2. Data Sources & Variables
+We use the **Open-Meteo API** to bridge historical weather patterns with real-time forecasts.
 
-| Week | Focus | Skills Applied |
-|------|-------|----------------|
-| **Week 1** (Days 1–5) | Data Engineering | Unit 2 — data sources, databases, ETL, pipelines |
-| **Week 2** (Days 6–8 + Presentation) | Statistical Analysis & Prediction | Unit 3 — descriptive stats, hypothesis testing, correlation, modeling |
+* **Locations (10 Cities):** Baku, Ganja, Sumqayit, Nakhchivan, Lankaran, Tabriz (IR), Tbilisi (GE), Yerevan (AM), Makhachkala (RU), Turkmenbashi (TM).
+* **Data Scope:** 5+ years of historical daily data and 7-day real-time forecasts.
+* **Key Variables:** Temperature (Max/Min/Mean/Apparent), Humidity, Solar Radiation, Wind Speed, Pressure, and Weathercode.
 
-**You must:**
+---
 
-1. Choose **3 or more cities** (at least one should be Baku or another city relevant to you).
-2. Ingest **at least 5 years** of daily historical weather data per city.
-3. Ingest **real-time forecast data** (7-day forecast) for the same cities.
-4. Store all data in a local **DuckDB** database with a well-designed schema.
-5. Conduct **exploratory data analysis** with descriptive statistics and visualisations.
-6. Formulate and execute **at least one formal hypothesis test** (more are encouraged if time permits).
-7. Build **at least one statistical prediction model** (e.g., predict next-day temperature, rain probability, or seasonal anomaly) with confidence intervals.
-8. Present findings on presentation day with a live pipeline demo.
+## 3. Methodology (8-Day Sprint)
 
-## Timeline
+| Day | Date | Focus | Key Deliverables |
+| :--- | :--- | :--- | :--- |
+| 1 | 20 Apr | **Kick-Off** | Repo setup, city/variable selection, project plan. |
+| 2 | 21 Apr | **Data Ingestion** | API ingestion module, full historical fetch (5+ years). |
+| 3 | 22 Apr | **Database Design** | **DuckDB** schema setup and data loading functions. |
+| 4 | 23 Apr | **Cleaning & FE** | Quality audit, outlier handling, and Feature Engineering. |
+| 5 | 24 Apr | **Automation** | Orchestrator, incremental loading, and quality gates. |
+| 6 | 27 Apr | **EDA** | Statistical distributions and cross-city correlations. |
+| 7 | 28 Apr | **Stats & Selection** | Hypothesis testing and final feature selection. |
+| 8 | 29 Apr | **Modeling** | Training 2+ models (XGBoost/RF) and evaluation. |
+| — | 30 Apr | **Presentation** | Live pipeline demo and final project submission. |
 
-Each day has a brief in the [`daily-briefs/`](daily-briefs/) folder with detailed tasks, deliverables, and resources. Submit a Pull Request at the end of each day showing your incremental progress.
+---
 
-| Day | Date | Brief | Focus |
-|-----|------|-------|-------|
-| 1 | 20 Apr | [Project Kick-Off & API Exploration](daily-briefs/day-01-project-kickoff.md) | Repo setup, API exploration, city/variable selection, project plan |
-| 2 | 21 Apr | [Data Ingestion Pipeline](daily-briefs/day-02-data-ingestion.md) | Ingestion module, config, full historical fetch, data audit |
-| 3 | 22 Apr | [Database Design & Data Loading](daily-briefs/day-03-database-design.md) | DuckDB schema, loading functions, validation queries |
-| 4 | 23 Apr | [Data Cleaning & Feature Engineering](daily-briefs/day-04-data-cleaning.md) | Quality assessment, cleaning pipeline, feature engineering, quality report |
-| 5 | 24 Apr | [Pipeline Automation & Data Quality](daily-briefs/day-05-pipeline-automation.md) | Orchestrator, incremental loading, quality gates, logging |
-| 6 | 27 Apr | [Exploratory Data Analysis](daily-briefs/day-06-eda.md) | Descriptive stats, distributions, time series, cross-city comparison |
-| 7 | 28 Apr | [Statistical Analysis & Feature Selection](daily-briefs/day-07-statistical-analysis.md) | Hypothesis testing, correlation, feature selection |
-| 8 | 29 Apr | [Predictive Modeling & Evaluation](daily-briefs/day-08-predictive-modeling.md) | 2+ models, train/test, confidence intervals, residual diagnostics |
-| — | 30 Apr | [Final Presentation](daily-briefs/day-09-final-presentation.md) | 10 min presentation, live demo, project submission |
+## 4. Success Criteria
+* **Model Recall:** Achieving **>80% Recall** for "Critical" heat days to minimize missed alerts.
+* **Reliability:** A robust pipeline using **DuckDB** for efficient large-scale data processing.
+* **Impact:** Aligning model alerts with historical failure dates (backtesting).
+* **Automation:** End-to-end flow from API call to risk classification in <10 seconds.
 
-## Getting Started
+---
 
-### 1. Fork & Clone
+## 🛠 Tech Stack
+* **Data Engineering:** DuckDB, Apache Arrow, Python.
+* **ML & Stats:** Scikit-learn, Scipy, XGBoost.
+* **Visualization:** Seaborn, Plotly.
 
-```bash
-# Fork this repo on GitHub, then:
-git clone https://github.com/<your-username>/m5-project-weather-pipeline.git
-cd m5-project-weather-pipeline
-```
-
-### 2. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Verify the API
-
-No API key needed. Test with:
-
-```bash
-curl "https://archive-api.open-meteo.com/v1/archive?latitude=40.41&longitude=49.87&start_date=2024-01-01&end_date=2024-01-07&daily=temperature_2m_max"
-```
-
-### 4. Start Day 1
-
-Open [`daily-briefs/day-01-project-kickoff.md`](daily-briefs/day-01-project-kickoff.md) and follow the tasks.
-
-## Repository Structure
-
-```
-m5-project-weather-pipeline/
-├── README.md               # This file — project overview
-├── requirements.txt        # Python dependencies
-├── .gitignore
-├── daily-briefs/           # Day-by-day task briefs (read-only reference)
-│   ├── day-01-project-kickoff.md
-│   ├── ...
-│   └── day-09-final-presentation.md
-├── src/                    # Your pipeline code
-│   ├── __init__.py
-│   ├── ingestion.py        # Day 2
-│   ├── config.py           # Day 2
-│   ├── database.py         # Day 3
-│   ├── cleaning.py         # Day 4
-│   ├── features.py         # Day 4
-│   ├── quality_checks.py   # Day 5
-│   └── pipeline.py         # Day 5
-├── notebooks/              # Daily Jupyter notebooks
-│   ├── day_01_exploration.ipynb
-│   ├── day_02_ingestion.ipynb
-│   ├── ...
-│   └── day_08_modeling.ipynb
-├── data/
-│   └── raw/                # Raw API data (gitignored)
-├── reports/
-│   ├── figures/            # Saved visualisations
-│   └── data_quality_report.md
-└── logs/                   # Pipeline logs (gitignored)
-```
-
-## Open-Meteo API Reference
-
-[Open-Meteo](https://open-meteo.com/) is a free, open-source weather API. **No API key required.**
-
-**Historical weather endpoint:**
-
-```
-https://archive-api.open-meteo.com/v1/archive?latitude=40.41&longitude=49.87&start_date=2020-01-01&end_date=2024-12-31&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max
-```
-
-**Forecast endpoint:**
-
-```
-https://api.open-meteo.com/v1/forecast?latitude=40.41&longitude=49.87&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,windspeed_10m_max
-```
-
-Key daily variables: `temperature_2m_max`, `temperature_2m_min`, `temperature_2m_mean`, `precipitation_sum`, `rain_sum`, `snowfall_sum`, `windspeed_10m_max`, `relative_humidity_2m_mean`, `apparent_temperature_max`, `weathercode`.
-
-## Evaluation Criteria
-
-| Criterion | Weight | Description |
-|-----------|--------|-------------|
-| Pipeline completeness | 20% | End-to-end from API to database, automated, with quality checks |
-| Data quality analysis | 15% | Thorough assessment, documented issues, justified decisions |
-| Statistical rigour | 20% | Proper hypothesis testing, assumption checking, effect sizes |
-| Prediction model | 20% | Appropriate model selection, evaluation, confidence intervals |
-| Presentation quality | 15% | Clear narrative, good visuals, effective demo |
-| Code quality | 10% | Clean, modular, documented, reproducible |
-
-## Resources
-
-- [Open-Meteo API Documentation](https://open-meteo.com/en/docs)
-- [Open-Meteo Historical Weather API](https://open-meteo.com/en/docs/historical-weather-api)
-- [DuckDB Python Documentation](https://duckdb.org/docs/api/python/overview)
-- [scipy.stats documentation](https://docs.scipy.org/doc/scipy/reference/stats.html)
-- [statsmodels documentation](https://www.statsmodels.org/stable/index.html)
-- [Seaborn gallery](https://seaborn.pydata.org/examples/index.html)
+---
+**Team:** sPySci (Spicy) 🌶️  
