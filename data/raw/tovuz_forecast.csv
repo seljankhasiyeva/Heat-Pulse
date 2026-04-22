@@ -1,0 +1,8 @@
+city,time,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,relative_humidity_2m_mean,pressure_msl_mean,cloud_cover_mean,shortwave_radiation_sum,apparent_temperature_max,weather_code
+Tovuz,2026-04-21,12.2,9.1,10.2,13.8,13.8,0.0,10.5,27.0,83,1013.0,98,9.87,10.6,61
+Tovuz,2026-04-22,18.7,6.4,12.6,0.0,0.0,0.0,11.8,25.2,71,1012.2,22,25.33,17.9,2
+Tovuz,2026-04-23,21.6,9.4,15.1,0.3,0.0,0.0,19.1,38.9,67,1007.4,25,24.67,20.2,3
+Tovuz,2026-04-24,13.3,9.9,11.5,1.1,0.4,0.0,25.8,50.8,64,1011.6,85,18.65,10.3,61
+Tovuz,2026-04-25,19.0,8.6,13.2,4.0,4.0,0.0,11.5,27.4,64,1017.6,59,25.0,17.7,61
+Tovuz,2026-04-26,18.2,8.8,13.1,0.0,0.0,0.0,10.3,23.8,80,1014.7,84,17.48,17.8,51
+Tovuz,2026-04-27,18.1,8.7,13.4,3.8,3.2,0.0,30.0,55.8,74,1006.4,80,14.57,17.4,80
