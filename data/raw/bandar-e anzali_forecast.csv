@@ -1,0 +1,8 @@
+city,time,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,relative_humidity_2m_mean,pressure_msl_mean,cloud_cover_mean,shortwave_radiation_sum,apparent_temperature_max,weather_code
+Bandar-e Anzali,2026-04-21,14.9,13.2,13.9,0.2,0.2,0.0,11.8,24.8,84,1013.4,100,6.79,14.0,61
+Bandar-e Anzali,2026-04-22,20.2,12.4,15.8,0.0,0.0,0.0,16.5,36.0,79,1013.1,50,21.75,20.5,45
+Bandar-e Anzali,2026-04-23,22.7,10.5,16.4,0.0,0.0,0.0,15.4,32.4,83,1007.9,22,25.43,25.1,45
+Bandar-e Anzali,2026-04-24,21.1,11.4,15.7,0.0,0.0,0.0,20.1,41.8,84,1008.9,54,24.4,20.3,45
+Bandar-e Anzali,2026-04-25,18.0,12.0,14.8,0.0,0.0,0.0,16.9,36.4,78,1018.8,94,19.14,15.9,45
+Bandar-e Anzali,2026-04-26,17.6,10.7,14.5,0.0,0.0,0.0,12.2,21.5,84,1014.1,83,17.5,16.9,3
+Bandar-e Anzali,2026-04-27,18.0,14.0,15.9,0.2,0.0,0.0,25.7,39.2,93,1003.2,90,13.9,19.4,80

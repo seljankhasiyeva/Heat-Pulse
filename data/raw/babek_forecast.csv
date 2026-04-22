@@ -1,0 +1,8 @@
+city,time,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,relative_humidity_2m_mean,pressure_msl_mean,cloud_cover_mean,shortwave_radiation_sum,apparent_temperature_max,weather_code
+Babek,2026-04-21,16.1,10.3,12.6,12.7,0.1,0.0,12.2,27.4,80,1008.6,97,17.07,15.9,95
+Babek,2026-04-22,19.7,9.9,14.1,2.2,0.0,0.0,4.2,13.0,65,1011.9,46,25.11,19.2,80
+Babek,2026-04-23,21.8,8.0,15.2,0.0,0.0,0.0,13.4,23.4,56,1009.2,30,22.87,20.5,3
+Babek,2026-04-24,24.2,9.3,16.8,0.0,0.0,0.0,19.6,37.8,54,1008.6,79,21.33,21.6,3
+Babek,2026-04-25,24.8,9.7,17.3,0.0,0.0,0.0,15.9,30.6,55,1013.3,49,24.93,24.5,3
+Babek,2026-04-26,23.5,13.7,18.3,1.2,0.0,0.0,14.7,25.6,54,1011.4,98,18.99,23.7,3
+Babek,2026-04-27,23.1,13.2,18.5,7.0,0.0,0.0,23.5,51.8,64,1004.2,96,17.62,22.4,95

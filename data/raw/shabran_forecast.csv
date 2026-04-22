@@ -1,0 +1,8 @@
+city,time,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,relative_humidity_2m_mean,pressure_msl_mean,cloud_cover_mean,shortwave_radiation_sum,apparent_temperature_max,weather_code
+Shabran,2026-04-21,12.9,8.9,11.0,2.6,2.5,0.0,10.9,21.2,81,1014.2,97,7.66,11.7,61
+Shabran,2026-04-22,14.2,7.1,10.6,0.0,0.0,0.0,21.7,41.8,85,1011.3,50,23.43,11.8,45
+Shabran,2026-04-23,12.6,9.2,10.7,0.0,0.0,0.0,19.1,36.4,83,1009.7,84,6.84,9.6,3
+Shabran,2026-04-24,13.6,8.6,10.8,0.0,0.0,0.0,10.6,18.7,77,1009.8,97,12.45,11.7,3
+Shabran,2026-04-25,13.9,8.9,10.9,0.9,0.6,0.0,19.3,41.8,76,1018.8,82,13.67,12.1,61
+Shabran,2026-04-26,17.5,8.5,11.8,0.0,0.0,0.0,9.4,23.8,83,1010.8,98,14.75,16.7,45
+Shabran,2026-04-27,18.1,9.0,12.9,5.4,5.4,0.0,21.1,46.1,83,1004.2,59,23.68,18.0,63

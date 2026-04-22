@@ -1,0 +1,8 @@
+city,time,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,relative_humidity_2m_mean,pressure_msl_mean,cloud_cover_mean,shortwave_radiation_sum,apparent_temperature_max,weather_code
+Tartar,2026-04-21,12.3,9.2,10.6,8.0,7.1,0.0,20.4,39.6,85,1013.5,97,9.18,10.3,61
+Tartar,2026-04-22,19.3,6.8,13.5,0.0,0.0,0.0,8.8,18.0,76,1012.2,16,25.25,20.2,45
+Tartar,2026-04-23,21.1,9.9,15.6,0.0,0.0,0.0,17.8,34.2,78,1007.8,46,23.79,21.9,3
+Tartar,2026-04-24,19.2,11.3,14.4,0.0,0.0,0.0,30.0,61.2,66,1009.3,79,21.51,16.3,3
+Tartar,2026-04-25,20.3,10.6,15.5,0.0,0.0,0.0,27.4,52.2,49,1016.8,58,22.09,19.0,3
+Tartar,2026-04-26,16.6,9.3,12.8,0.0,0.0,0.0,10.7,23.0,85,1014.8,95,16.2,16.8,3
+Tartar,2026-04-27,21.3,11.5,15.9,3.4,0.8,0.0,17.9,36.0,71,1004.1,67,20.87,23.6,80
