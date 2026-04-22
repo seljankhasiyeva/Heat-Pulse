@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heat Pulse | Dashboard</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;600;900&display=swap');
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background-color: #030712; 
+        }
+
+        #map { 
+            height: 100vh; 
+            width: 100vw; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            z-index: 1; 
+        }
+
+        /* Header elementlərinin xəritənin üstündə görünməsi üçün */
+        .ui-overlay { 
+            z-index: 1000; 
+            pointer-events: none; 
+        }
+        
+        .ui-overlay * { 
+            pointer-events: auto; 
+        }
+
+        .sidebar-transition { 
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+
+        /* Xəritənin qaranlıq dizaynını daha da tündləşdirmək üçün filter (opsional) */
+        .leaflet-container {
+            background: #030712 !important;
+        }
+    </style>
+</head>
+<body class="overflow-hidden text-gray-100">
+
+    <div id="map"></div>
+
+    <header class="ui-overlay fixed top-0 left-0 w-full p-8 flex justify-between items-start">
+        <div>
+            <h1 class="text-4xl font-black italic tracking-tighter leading-none flex items-center">
+                <span class="text-red-600 drop-shadow-[0_0_15px_rgba(220,38,38,0.5)]">HEAT</span>
+                <span class="text-white ml-1 font-light italic">PULSE</span>
+            </h1>
+            <p class="text-[10px] text-gray-400 uppercase tracking-[0.4em] mt-2 ml-1 font-bold">Advanced Thermal Analytics</p>
+        </div>
+
+        <div class="relative">
+            <input type="text" id="map-search" 
+                   class="bg-gray-900/80 border border-gray-700/50 rounded-full py-2 px-6 w-64 text-sm focus:outline-none focus:border-red-600 backdrop-blur-xl transition-all duration-300 placeholder-gray-500 shadow-2xl" 
+                   placeholder="Şəhər axtar...">
+        </div>
+    </header>
+
+    <div id="overlay" class="fixed inset-0 bg-black/60 backdrop-blur-md z-[1500] hidden transition-opacity duration-500"></div>
+
+    <aside id="sidebar" class="sidebar-transition fixed top-0 left-0 h-full w-[450px] bg-gray-950/98 border-r border-gray-800 z-[2000] -translate-x-full shadow-2xl overflow-y-auto">
+        <div class="p-10 h-full flex flex-col relative">
+            <button id="close-btn" class="absolute top-8 right-8 text-gray-500 hover:text-white text-4xl font-thin transition-colors">&times;</button>
+            
+            <div id="sidebar-content" class="mt-12">
+                <div class="flex flex-col items-center justify-center h-64 text-gray-600 italic text-center">
+                    <svg class="w-12 h-12 mb-4 opacity-20" fill="currentColor" viewBox="0 0 20 20"><path d="M10 20a10 10 0 1 1 0-20 10 10 0 0 1 0 20zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm-1-7.5l4-4L14.5 8l-4 4L6 7.5 7.5 6l1.5 1.5z"/></svg>
+                    <p>Təhlil üçün xəritədən bir nöqtə seçin</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
