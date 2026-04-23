@@ -1,8 +1,8 @@
-city,time,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,relative_humidity_2m_mean,pressure_msl_mean,cloud_cover_mean,shortwave_radiation_sum,apparent_temperature_max,weather_code
-Jabrayil,2026-04-21,11.2,7.3,8.7,7.1,4.2,0.0,26.5,48.6,87,1013.0,99,5.87,8.7,80
-Jabrayil,2026-04-22,18.3,7.6,12.7,0.0,0.0,0.0,17.9,35.6,77,1012.2,29,25.39,18.3,3
-Jabrayil,2026-04-23,24.4,10.9,16.9,0.0,0.0,0.0,17.9,34.9,58,1007.4,4,26.05,21.9,0
-Jabrayil,2026-04-24,17.8,11.7,14.3,0.1,0.0,0.0,20.6,47.2,71,1008.8,51,22.86,17.2,61
-Jabrayil,2026-04-25,18.1,10.3,13.9,0.0,0.0,0.0,17.0,33.8,56,1017.0,62,25.21,16.2,45
-Jabrayil,2026-04-26,17.0,8.3,12.2,0.0,0.0,0.0,10.0,22.7,86,1014.4,97,17.15,16.8,45
-Jabrayil,2026-04-27,22.9,12.0,16.8,12.2,0.0,0.0,15.5,47.9,69,1003.7,84,20.94,23.4,95
+city,time,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,relative_humidity_2m_mean,pressure_msl_mean,cloud_cover_mean,shortwave_radiation_sum,apparent_temperature_max,weather_code,latitude,longitude
+Jabrayil,2026-04-21,11.2,7.3,8.7,7.1,4.2,0.0,26.5,48.6,87,1013.0,99,5.87,8.7,80,39.4,47.03
+Jabrayil,2026-04-22,18.3,7.6,12.7,0.0,0.0,0.0,17.9,35.6,77,1012.2,29,25.39,18.3,3,39.4,47.03
+Jabrayil,2026-04-23,24.4,10.9,16.9,0.0,0.0,0.0,17.9,34.9,58,1007.4,4,26.05,21.9,0,39.4,47.03
+Jabrayil,2026-04-24,17.8,11.7,14.3,0.1,0.0,0.0,20.6,47.2,71,1008.8,51,22.86,17.2,61,39.4,47.03
+Jabrayil,2026-04-25,18.1,10.3,13.9,0.0,0.0,0.0,17.0,33.8,56,1017.0,62,25.21,16.2,45,39.4,47.03
+Jabrayil,2026-04-26,17.0,8.3,12.2,0.0,0.0,0.0,10.0,22.7,86,1014.4,97,17.15,16.8,45,39.4,47.03
+Jabrayil,2026-04-27,22.9,12.0,16.8,12.2,0.0,0.0,15.5,47.9,69,1003.7,84,20.94,23.4,95,39.4,47.03

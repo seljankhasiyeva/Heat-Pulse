@@ -1,8 +1,8 @@
-city,time,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,relative_humidity_2m_mean,pressure_msl_mean,cloud_cover_mean,shortwave_radiation_sum,apparent_temperature_max,weather_code
-Sabirabad,2026-04-21,13.2,10.5,11.7,9.5,7.9,0.0,12.8,23.8,88,1013.6,97,5.11,12.7,61
-Sabirabad,2026-04-22,21.5,8.1,14.4,0.0,0.0,0.0,14.1,26.6,74,1012.0,24,25.14,20.6,3
-Sabirabad,2026-04-23,22.5,9.4,14.8,0.0,0.0,0.0,27.6,50.8,80,1008.3,33,24.4,22.6,45
-Sabirabad,2026-04-24,17.8,11.3,14.0,0.0,0.0,0.0,15.3,25.9,80,1009.2,71,10.54,17.4,3
-Sabirabad,2026-04-25,20.0,9.8,14.0,0.0,0.0,0.0,28.0,57.2,64,1017.3,28,24.05,19.7,2
-Sabirabad,2026-04-26,18.3,8.7,13.3,0.0,0.0,0.0,8.0,18.0,79,1014.6,78,13.26,18.3,3
-Sabirabad,2026-04-27,26.4,11.1,18.3,1.0,0.0,0.0,15.1,26.3,71,1003.6,37,24.36,28.8,80
+city,time,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,relative_humidity_2m_mean,pressure_msl_mean,cloud_cover_mean,shortwave_radiation_sum,apparent_temperature_max,weather_code,latitude,longitude
+Sabirabad,2026-04-21,13.2,10.5,11.7,9.5,7.9,0.0,12.8,23.8,88,1013.6,97,5.11,12.7,61,40.01,48.47
+Sabirabad,2026-04-22,21.5,8.1,14.4,0.0,0.0,0.0,14.1,26.6,74,1012.0,24,25.14,20.6,3,40.01,48.47
+Sabirabad,2026-04-23,22.5,9.4,14.8,0.0,0.0,0.0,27.6,50.8,80,1008.3,33,24.4,22.6,45,40.01,48.47
+Sabirabad,2026-04-24,17.8,11.3,14.0,0.0,0.0,0.0,15.3,25.9,80,1009.2,71,10.54,17.4,3,40.01,48.47
+Sabirabad,2026-04-25,20.0,9.8,14.0,0.0,0.0,0.0,28.0,57.2,64,1017.3,28,24.05,19.7,2,40.01,48.47
+Sabirabad,2026-04-26,18.3,8.7,13.3,0.0,0.0,0.0,8.0,18.0,79,1014.6,78,13.26,18.3,3,40.01,48.47
+Sabirabad,2026-04-27,26.4,11.1,18.3,1.0,0.0,0.0,15.1,26.3,71,1003.6,37,24.36,28.8,80,40.01,48.47

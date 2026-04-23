@@ -1,8 +1,8 @@
-city,time,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,relative_humidity_2m_mean,pressure_msl_mean,cloud_cover_mean,shortwave_radiation_sum,apparent_temperature_max,weather_code
-Shamkir,2026-04-21,10.8,8.6,9.8,7.3,7.1,0.0,12.6,26.3,87,1013.1,99,6.45,9.6,61
-Shamkir,2026-04-22,18.2,7.4,12.9,0.0,0.0,0.0,11.9,25.2,69,1012.1,23,24.71,17.5,3
-Shamkir,2026-04-23,21.3,10.7,15.8,0.0,0.0,0.0,19.3,40.7,68,1007.3,27,23.29,20.0,3
-Shamkir,2026-04-24,14.8,10.5,12.5,0.2,0.0,0.0,30.1,62.3,64,1010.9,81,20.55,13.8,3
-Shamkir,2026-04-25,18.8,9.5,13.6,0.6,0.3,0.0,15.8,39.6,60,1017.4,70,23.62,17.0,61
-Shamkir,2026-04-26,16.9,8.8,12.5,0.0,0.0,0.0,6.1,14.8,84,1014.7,89,16.46,16.3,3
-Shamkir,2026-04-27,17.9,7.9,12.9,2.6,1.9,0.0,28.8,52.9,71,1006.2,70,15.52,16.9,63
+city,time,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,relative_humidity_2m_mean,pressure_msl_mean,cloud_cover_mean,shortwave_radiation_sum,apparent_temperature_max,weather_code,latitude,longitude
+Shamkir,2026-04-21,10.8,8.6,9.8,7.3,7.1,0.0,12.6,26.3,87,1013.1,99,6.45,9.6,61,40.83,46.02
+Shamkir,2026-04-22,18.2,7.4,12.9,0.0,0.0,0.0,11.9,25.2,69,1012.1,23,24.71,17.5,3,40.83,46.02
+Shamkir,2026-04-23,21.3,10.7,15.8,0.0,0.0,0.0,19.3,40.7,68,1007.3,27,23.29,20.0,3,40.83,46.02
+Shamkir,2026-04-24,14.8,10.5,12.5,0.2,0.0,0.0,30.1,62.3,64,1010.9,81,20.55,13.8,3,40.83,46.02
+Shamkir,2026-04-25,18.8,9.5,13.6,0.6,0.3,0.0,15.8,39.6,60,1017.4,70,23.62,17.0,61,40.83,46.02
+Shamkir,2026-04-26,16.9,8.8,12.5,0.0,0.0,0.0,6.1,14.8,84,1014.7,89,16.46,16.3,3,40.83,46.02
+Shamkir,2026-04-27,17.9,7.9,12.9,2.6,1.9,0.0,28.8,52.9,71,1006.2,70,15.52,16.9,63,40.83,46.02

@@ -1,8 +1,8 @@
-city,time,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,relative_humidity_2m_mean,pressure_msl_mean,cloud_cover_mean,shortwave_radiation_sum,apparent_temperature_max,weather_code
-Malatya,2026-04-21,15.9,5.2,10.5,0.0,0.0,0.0,12.6,22.0,55,1012.4,15,26.81,14.9,3
-Malatya,2026-04-22,18.1,6.4,12.1,0.0,0.0,0.0,15.7,28.1,59,1012.9,35,23.91,18.2,3
-Malatya,2026-04-23,18.5,7.6,13.2,0.0,0.0,0.0,30.5,52.2,56,1009.4,46,26.38,15.2,3
-Malatya,2026-04-24,19.4,8.4,13.7,0.2,0.0,0.0,22.5,38.2,65,1010.1,64,23.71,19.0,3
-Malatya,2026-04-25,18.5,9.7,13.9,0.3,0.0,0.0,7.9,15.5,73,1013.7,87,17.69,18.5,61
-Malatya,2026-04-26,18.7,9.8,14.4,0.45,0.0,0.0,8.9,30.0,74,1011.1,83,19.69,19.3,61
-Malatya,2026-04-27,17.7,7.3,12.5,0.0,0.0,0.0,23.8,51.1,60,1008.9,39,23.39,14.3,3
+city,time,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,relative_humidity_2m_mean,pressure_msl_mean,cloud_cover_mean,shortwave_radiation_sum,apparent_temperature_max,weather_code,latitude,longitude
+Malatya,2026-04-21,15.9,5.2,10.5,0.0,0.0,0.0,12.6,22.0,55,1012.4,15,26.81,14.9,3,38.35,38.31
+Malatya,2026-04-22,18.1,6.4,12.1,0.0,0.0,0.0,15.7,28.1,59,1012.9,35,23.91,18.2,3,38.35,38.31
+Malatya,2026-04-23,18.5,7.6,13.2,0.0,0.0,0.0,30.5,52.2,56,1009.4,46,26.38,15.2,3,38.35,38.31
+Malatya,2026-04-24,19.4,8.4,13.7,0.2,0.0,0.0,22.5,38.2,65,1010.1,64,23.71,19.0,3,38.35,38.31
+Malatya,2026-04-25,18.5,9.7,13.9,0.3,0.0,0.0,7.9,15.5,73,1013.7,87,17.69,18.5,61,38.35,38.31
+Malatya,2026-04-26,18.7,9.8,14.4,0.45,0.0,0.0,8.9,30.0,74,1011.1,83,19.69,19.3,61,38.35,38.31
+Malatya,2026-04-27,17.7,7.3,12.5,0.0,0.0,0.0,23.8,51.1,60,1008.9,39,23.39,14.3,3,38.35,38.31

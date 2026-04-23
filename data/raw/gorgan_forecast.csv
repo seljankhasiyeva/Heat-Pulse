@@ -1,8 +1,8 @@
-city,time,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,relative_humidity_2m_mean,pressure_msl_mean,cloud_cover_mean,shortwave_radiation_sum,apparent_temperature_max,weather_code
-Gorgan,2026-04-21,14.6,12.5,13.6,3.6,3.2,0.0,7.9,20.5,94,1012.5,99,3.78,15.1,80
-Gorgan,2026-04-22,14.4,12.3,13.1,0.1,0.0,0.0,5.0,10.1,94,1013.9,81,2.91,15.1,51
-Gorgan,2026-04-23,26.3,10.3,18.8,0.0,0.0,0.0,11.6,24.1,57,1008.9,3,26.72,27.0,1
-Gorgan,2026-04-24,26.9,15.7,21.0,0.0,0.0,0.0,15.1,28.4,46,1009.0,1,26.43,27.4,1
-Gorgan,2026-04-25,21.8,14.3,18.4,0.0,0.0,0.0,18.6,38.5,68,1017.1,66,20.71,22.5,45
-Gorgan,2026-04-26,21.9,13.5,16.7,0.0,0.0,0.0,11.2,23.0,85,1013.8,93,15.98,22.6,45
-Gorgan,2026-04-27,30.7,12.2,20.7,0.0,0.0,0.0,13.8,26.6,74,1003.6,52,24.7,31.7,45
+city,time,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,relative_humidity_2m_mean,pressure_msl_mean,cloud_cover_mean,shortwave_radiation_sum,apparent_temperature_max,weather_code,latitude,longitude
+Gorgan,2026-04-21,14.6,12.5,13.6,3.6,3.2,0.0,7.9,20.5,94,1012.5,99,3.78,15.1,80,36.84,54.44
+Gorgan,2026-04-22,14.4,12.3,13.1,0.1,0.0,0.0,5.0,10.1,94,1013.9,81,2.91,15.1,51,36.84,54.44
+Gorgan,2026-04-23,26.3,10.3,18.8,0.0,0.0,0.0,11.6,24.1,57,1008.9,3,26.72,27.0,1,36.84,54.44
+Gorgan,2026-04-24,26.9,15.7,21.0,0.0,0.0,0.0,15.1,28.4,46,1009.0,1,26.43,27.4,1,36.84,54.44
+Gorgan,2026-04-25,21.8,14.3,18.4,0.0,0.0,0.0,18.6,38.5,68,1017.1,66,20.71,22.5,45,36.84,54.44
+Gorgan,2026-04-26,21.9,13.5,16.7,0.0,0.0,0.0,11.2,23.0,85,1013.8,93,15.98,22.6,45,36.84,54.44
+Gorgan,2026-04-27,30.7,12.2,20.7,0.0,0.0,0.0,13.8,26.6,74,1003.6,52,24.7,31.7,45,36.84,54.44

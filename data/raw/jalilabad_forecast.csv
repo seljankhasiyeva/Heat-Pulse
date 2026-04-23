@@ -1,8 +1,8 @@
-city,time,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,relative_humidity_2m_mean,pressure_msl_mean,cloud_cover_mean,shortwave_radiation_sum,apparent_temperature_max,weather_code
-Jalilabad,2026-04-21,13.1,10.7,11.6,2.9,1.6,0.0,13.7,29.2,84,1013.7,99,5.41,11.2,80
-Jalilabad,2026-04-22,21.2,7.5,13.9,0.0,0.0,0.0,15.7,33.5,75,1012.1,29,24.67,21.5,3
-Jalilabad,2026-04-23,23.9,8.4,15.3,0.0,0.0,0.0,16.0,34.6,81,1008.1,44,24.18,25.5,45
-Jalilabad,2026-04-24,17.9,11.7,14.3,0.0,0.0,0.0,12.6,28.1,87,1009.2,85,11.15,18.3,45
-Jalilabad,2026-04-25,21.0,11.9,14.9,0.0,0.0,0.0,22.9,50.8,57,1017.9,61,23.15,21.5,3
-Jalilabad,2026-04-26,18.7,10.4,13.9,0.0,0.0,0.0,8.5,19.8,83,1014.4,98,14.56,18.2,45
-Jalilabad,2026-04-27,24.8,10.2,16.9,0.6,0.1,0.0,20.7,32.0,80,1003.8,72,23.66,26.6,61
+city,time,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,relative_humidity_2m_mean,pressure_msl_mean,cloud_cover_mean,shortwave_radiation_sum,apparent_temperature_max,weather_code,latitude,longitude
+Jalilabad,2026-04-21,13.1,10.7,11.6,2.9,1.6,0.0,13.7,29.2,84,1013.7,99,5.41,11.2,80,39.21,48.49
+Jalilabad,2026-04-22,21.2,7.5,13.9,0.0,0.0,0.0,15.7,33.5,75,1012.1,29,24.67,21.5,3,39.21,48.49
+Jalilabad,2026-04-23,23.9,8.4,15.3,0.0,0.0,0.0,16.0,34.6,81,1008.1,44,24.18,25.5,45,39.21,48.49
+Jalilabad,2026-04-24,17.9,11.7,14.3,0.0,0.0,0.0,12.6,28.1,87,1009.2,85,11.15,18.3,45,39.21,48.49
+Jalilabad,2026-04-25,21.0,11.9,14.9,0.0,0.0,0.0,22.9,50.8,57,1017.9,61,23.15,21.5,3,39.21,48.49
+Jalilabad,2026-04-26,18.7,10.4,13.9,0.0,0.0,0.0,8.5,19.8,83,1014.4,98,14.56,18.2,45,39.21,48.49
+Jalilabad,2026-04-27,24.8,10.2,16.9,0.6,0.1,0.0,20.7,32.0,80,1003.8,72,23.66,26.6,61,39.21,48.49
