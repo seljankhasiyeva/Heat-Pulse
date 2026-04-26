@@ -1,0 +1,58 @@
+2026-04-26 09:00:00 [INFO    ] pipeline — ======================================================================
+2026-04-26 09:00:00 [INFO    ] pipeline — Heat-Pulse Pipeline  |  run_id=20260426_090000  |  mode=FULL
+2026-04-26 09:00:00 [INFO    ] pipeline — ======================================================================
+2026-04-26 09:00:00 [INFO    ] pipeline — 
+── Stage 1: INGEST ─────────────────────────────────────────
+2026-04-26 09:00:00 [INFO    ] pipeline — Using project ingestion.py for fetching.
+2026-04-26 09:00:00 [INFO    ] pipeline —   Fetching Baku [2020-01-01 → 2026-04-26]
+2026-04-26 09:00:03 [INFO    ] pipeline —     → 2,307 rows fetched.
+2026-04-26 09:00:03 [INFO    ] pipeline —   Fetching Ganja [2020-01-01 → 2026-04-26]
+2026-04-26 09:00:06 [INFO    ] pipeline —     → 2,307 rows fetched.
+2026-04-26 09:00:06 [INFO    ] pipeline —   Fetching Sumgayit [2020-01-01 → 2026-04-26]
+2026-04-26 09:00:09 [INFO    ] pipeline —     → 2,307 rows fetched.
+2026-04-26 09:00:09 [INFO    ] pipeline — Raw parquet saved → data/raw.parquet
+2026-04-26 09:00:09 [INFO    ] pipeline —   Rows ingested: 6,921
+2026-04-26 09:00:09 [INFO    ] quality_checks — [row_count] PASS — 6,921 rows present.
+2026-04-26 09:00:09 [INFO    ] quality_checks — [freshness] PASS — Data is fresh. Latest date: 2026-04-25 (lag 1 days).
+
+──────────────────────────────────────────────────────────────────────────────────────────
+  CHECK                      STAGE            STATUS  DETAILS
+──────────────────────────────────────────────────────────────────────────────────────────
+  row_count                  raw_load         ✅ PASS   6,921 rows present.
+  freshness                  raw_load         ✅ PASS   Data is fresh. Latest date: 2026-04-25 (lag 1 days).
+──────────────────────────────────────────────────────────────────────────────────────────
+  TOTAL: 2 PASS  |  0 WARN  |  0 FAIL
+──────────────────────────────────────────────────────────────────────────────────────────
+
+2026-04-26 09:00:10 [INFO    ] pipeline — 
+── Stage 2: CLEAN ──────────────────────────────────────────
+2026-04-26 09:00:10 [INFO    ] pipeline —   Rows in staging: 6,921
+2026-04-26 09:00:10 [INFO    ] quality_checks — [row_count] PASS — 6,921 rows present.
+2026-04-26 09:00:10 [INFO    ] quality_checks — [null_ratio] PASS — All numeric columns have ≤ 5% nulls.
+2026-04-26 09:00:10 [INFO    ] quality_checks — [date_continuity] PASS — No gaps > 3 days found in any city.
+2026-04-26 09:00:10 [INFO    ] quality_checks — [value_ranges] PASS — All temperature values within [-50°C, 60°C].
+
+2026-04-26 09:00:11 [INFO    ] pipeline — 
+── Stage 3: FEATURES ───────────────────────────────────────
+2026-04-26 09:00:11 [INFO    ] pipeline —   Rows in analytics: 6,921
+2026-04-26 09:00:11 [INFO    ] quality_checks — [row_count] PASS — 6,921 rows present.
+2026-04-26 09:00:11 [INFO    ] quality_checks — [feature_completeness] PASS — All 14 required feature columns present and non-null.
+
+2026-04-26 09:00:11 [INFO    ] pipeline — ======================================================================
+2026-04-26 09:00:11 [INFO    ] pipeline — Pipeline COMPLETED in 11.2s
+2026-04-26 09:00:11 [INFO    ] pipeline —   Ingested:  6,921 rows
+2026-04-26 09:00:11 [INFO    ] pipeline —   Staging:   6,921 rows
+2026-04-26 09:00:11 [INFO    ] pipeline —   Analytics: 6,921 rows
+2026-04-26 09:00:11 [INFO    ] pipeline — ======================================================================
+
+2026-04-26 09:05:00 [INFO    ] pipeline — ======================================================================
+2026-04-26 09:05:00 [INFO    ] pipeline — Heat-Pulse Pipeline  |  run_id=20260426_090500  |  mode=INCREMENTAL
+2026-04-26 09:05:00 [INFO    ] pipeline — ======================================================================
+2026-04-26 09:05:00 [INFO    ] pipeline —   Baku: already up-to-date (latest=2026-04-25).
+2026-04-26 09:05:00 [INFO    ] pipeline —   Ganja: already up-to-date (latest=2026-04-25).
+2026-04-26 09:05:00 [INFO    ] pipeline —   Sumgayit: already up-to-date (latest=2026-04-25).
+2026-04-26 09:05:00 [INFO    ] pipeline —   Rows ingested: 0
+2026-04-26 09:05:00 [INFO    ] quality_checks — [row_count] PASS — 6,921 rows present.
+2026-04-26 09:05:00 [INFO    ] quality_checks — [freshness] PASS — Data is fresh. Latest date: 2026-04-25 (lag 1 days).
+2026-04-26 09:05:02 [INFO    ] pipeline — Pipeline COMPLETED in 2.1s  (0 new rows — all cities up-to-date)
+2026-04-26 09:05:02 [INFO    ] pipeline — ======================================================================
