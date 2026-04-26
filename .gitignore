@@ -2,9 +2,6 @@
 data/*.duckdb
 data/*.duckdb.wal
 
-# Logs
-logs/
-
 # Python
 __pycache__/
 *.py[cod]
