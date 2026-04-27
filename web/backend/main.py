@@ -1,6 +1,8 @@
+import os
+import duckdb
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel # Məlumatın formatını yoxlamaq üçün
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -11,30 +13,81 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 1. Yollar
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DB_PATH = os.path.join(BASE_DIR, "data", "weather_data.duckdb")
+RAW_FOLDER = os.path.join(BASE_DIR, "data", "raw")
 
-fake_db = [
-    {"city": "Bakı", "temp": 32, "lat": 40.4093, "lon": 49.8671, "risk": "High"},
-    {"city": "Gəncə", "temp": 35, "lat": 40.6828, "lon": 46.3606, "risk": "High"},
-    {"city": "Lənkəran", "temp": 28, "lat": 38.7529, "lon": 48.8475, "risk": "Low"}
-]
+def sync_all_cities():
+    if not os.path.exists(RAW_FOLDER):
+        print(f"--- XƏTA: {RAW_FOLDER} qovluğu tapılmadı!")
+        return
 
-class City(BaseModel):
-    city: str
-    temp: float
-    lat: float
-    lon: float
-    risk: str
+    con = duckdb.connect(DB_PATH)
+    
+    # Cədvəli yaradarkən ehtiyatlı oluruq
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS cities (
+            city VARCHAR,
+            lat DOUBLE,
+            lon DOUBLE,
+            temp DOUBLE,
+            risk VARCHAR
+        )
+    """)
+    
+    try:
+        # 2. Bütün CSV-ləri bir dəfəyə oxuyub bazaya doldurmaq
+        # RAW_FOLDER/*.csv bütün faylları tapır və DuckDB onları avtomatik alt-alta birləşdirir
+        all_csv_path = os.path.join(RAW_FOLDER, "*.csv")
+        
+        con.execute("DELETE FROM cities") # Köhnə datanı silirik
+        
+        # 'union_by_name=True' əgər bəzi fayllarda sütun sırası fərqlidirsə kömək edir
+        con.execute(f"""
+            INSERT INTO cities 
+            SELECT * FROM read_csv_auto('{all_csv_path}', union_by_name=True)
+        """)
+        
+        row_count = con.execute("SELECT count(*) FROM cities").fetchone()[0]
+        file_count = len([f for f in os.listdir(RAW_FOLDER) if f.endswith('.csv')])
+        
+        print(f"--- UĞURLU: {file_count} ədəd fayldan cəmi {row_count} sətir yükləndi.")
+        
+    except Exception as e:
+        print(f"--- CSV oxunma xətası: {e}")
+        print("--- İpucu: Bütün CSV fayllarının sütun adları eyni olmalıdır.")
+    
+    con.close()
+
+sync_all_cities()
+
+# --- Endpointlər ---
 
 @app.get("/api/weather")
 def get_weather():
-    return {"status": "success", "data": fake_db}
+    try:
+        con = duckdb.connect(DB_PATH, read_only=True)
+        df = con.execute("SELECT * FROM cities").df()
+        con.close()
+        return {"status": "success", "data": df.to_dict(orient="records")}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+class City(BaseModel):
+    city: str
+    lat: float
+    lon: float
+    temp: float
+    risk: str
 
 @app.post("/api/admin/add")
 def add_city(city: City):
-    fake_db.append(city.model_dump())
-    return {"message": f"{city.city} uğurla əlavə edildi!", "current_data": fake_db}
-
-@app.post("/api/admin/add")
-def add_city(city: City):
-    fake_db.append(city.dict()) 
-    return {"status": "success"}
+    try:
+        con = duckdb.connect(DB_PATH)
+        con.execute("INSERT INTO cities VALUES (?, ?, ?, ?, ?)", 
+                    (city.city, city.lat, city.lon, city.temp, city.risk))
+        con.close()
+        return {"status": "success"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
