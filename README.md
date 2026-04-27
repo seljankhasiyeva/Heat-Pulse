@@ -1,5 +1,5 @@
 # Heat-Pulse
-### Team sPySci (Spicy) | Weather Intelligence Pipeline
+### Team sPySci (Spicy) 
 
 
 ## 1. Problem Statement
