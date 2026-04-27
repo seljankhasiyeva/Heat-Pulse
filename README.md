@@ -71,6 +71,4 @@ We use the **Open-Meteo API** to bridge historical weather patterns with real-ti
 | 7 |  |  |  |  |
 | 8 |  |  |  |  |
 
-Dediyiniz impact score formulunu əlavə edərsiz, əgər githubda varsa o da kifayət edir
-
 ---
