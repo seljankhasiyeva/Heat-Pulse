@@ -18,23 +18,7 @@ We use the **Open-Meteo API** to bridge historical weather patterns with real-ti
 
 ---
 
-## 3. Methodology (8-Day Sprint)
-
-| Day | Date | Focus | Key Deliverables |
-| :--- | :--- | :--- | :--- |
-| 1 | 20 Apr | **Kick-Off** | Repo setup, city/variable selection, project plan. |
-| 2 | 21 Apr | **Data Ingestion** | API ingestion module, full historical fetch (5+ years). |
-| 3 | 22 Apr | **Database Design** | **DuckDB** schema setup and data loading functions. |
-| 4 | 23 Apr | **Cleaning & FE** | Quality audit, outlier handling, and Feature Engineering. |
-| 5 | 24 Apr | **Automation** | Orchestrator, incremental loading, and quality gates. |
-| 6 | 27 Apr | **EDA** | Statistical distributions and cross-city correlations. |
-| 7 | 28 Apr | **Stats & Selection** | Hypothesis testing and final feature selection. |
-| 8 | 29 Apr | **Modeling** | Training 2+ models (XGBoost/RF) and evaluation. |
-| — | 30 Apr | **Presentation** | Live pipeline demo and final project submission. |
-
----
-
-## 4. Success Criteria
+## 3. Success Criteria
 * **Model Recall:** Achieving **>80% Recall** for "Critical" heat days to minimize missed alerts.
 * **Reliability:** A robust pipeline using **DuckDB** for efficient large-scale data processing.
 * **Impact:** Aligning model alerts with historical failure dates (backtesting).
