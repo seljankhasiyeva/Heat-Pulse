@@ -6,10 +6,21 @@ let colorfulMode = false;
 // Xəritəni başlat
 const map = L.map('map', { zoomControl: false }).setView([40.4093, 49.8671], 7);
 
-// 2. Xəritə Layeri (Dark Mode)
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OpenStreetMap'
+    attribution: '&copy; OpenStreetMap',
+    maxZoom: 19
 }).addTo(map);
+
+// 1. Küçük boyutlu marker ikonu tanımla
+const smallIcon = L.icon({
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+    iconSize: [15, 25], // Pin boyutunu buradan küçültebilirsin (Genişlik, Yükseklik)
+    iconAnchor: [7, 25],
+    popupAnchor: [1, -20],
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    shadowSize: [25, 25]
+});
+
 
 // DOM Elementləri
 const sidebar = document.getElementById('sidebar');
@@ -39,13 +50,19 @@ async function fetchWeatherData() {
 
 // 4. Şəhər detallarını Sidebar-da göstər
 function openDetails(city) {
-    sidebar.classList.remove('-translate-x-full');
-    overlay.classList.remove('hidden');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarContent = document.getElementById('sidebar-content');
+    const overlay = document.getElementById('overlay');
 
+    // Sidebar-ı gizli haldan çıxarırıq
+    sidebar.classList.remove('-translate-x-full');
+    if(overlay) overlay.classList.remove('hidden');
+
+    // İçini dinamik doldururuq
     sidebarContent.innerHTML = `
-        <div class="animate-fadeIn">
+        <div class="animate-fadeIn p-4">
             <h2 class="text-red-600 font-bold tracking-widest text-[10px] uppercase mb-1 italic">Live Analytics</h2>
-            <h1 class="text-5xl font-black italic text-white mb-6 tracking-tighter uppercase">${city.city}</h1>
+            <h1 class="text-4xl font-black italic text-white mb-6 tracking-tighter uppercase">${city.city}</h1>
             
             <div class="space-y-4">
                 <div class="bg-gray-900 border border-gray-800 p-6 rounded-3xl">
@@ -54,22 +71,19 @@ function openDetails(city) {
                 </div>
                 <div class="bg-gray-900 border border-gray-800 p-6 rounded-3xl">
                     <p class="text-gray-500 text-xs uppercase mb-1 font-bold">Risk Statusu</p>
-                    <p class="text-2xl font-bold ${city.risk === 'High' ? 'text-red-500' : 'text-green-500'}">
-                        ${city.risk.toUpperCase()} RISK
+                    <p class="text-2xl font-bold ${city.temp > 30 ? 'text-red-500' : 'text-green-500'}">
+                        ${city.temp > 30 ? 'HIGH' : 'NORMAL'} RISK
                     </p>
                 </div>
             </div>
 
-            <div class="mt-8 bg-gray-800/30 p-6 rounded-3xl border border-gray-700/50 backdrop-blur-md">
-                <h3 class="text-xs font-bold text-gray-300 mb-4 uppercase tracking-widest">Həftəlik Trend</h3>
-                <div class="h-32 flex items-end justify-between gap-1">
-                    <div class="w-full bg-gray-700 h-1/2 rounded-t-sm"></div>
-                    <div class="w-full bg-gray-700 h-3/4 rounded-t-sm"></div>
-                    <div class="w-full bg-red-600 h-full rounded-t-sm shadow-[0_0_15px_rgba(220,38,38,0.4)]"></div>
-                    <div class="w-full bg-gray-700 h-2/3 rounded-t-sm"></div>
-                    <div class="w-full bg-gray-700 h-1/2 rounded-t-sm"></div>
-                </div>
-                <p class="text-[9px] text-gray-500 mt-4 text-center italic font-medium">Termal dalğalanma analizi</p>
+            <div class="mt-8 bg-gray-800/30 p-6 rounded-3xl border border-gray-700/50 backdrop-blur-md text-white">
+                <h3 class="text-xs font-bold text-gray-300 mb-2 uppercase tracking-widest">Termal Analiz</h3>
+                <p class="text-sm italic">
+                    ${city.temp > 30 
+                        ? "Yüksək temperatur aşkarlanmışdır. Jeneratör soyutma sistemlərini yoxlayın." 
+                        : "Sıcaklıq normaldır. Sistem stabil işləyir."}
+                </p>
             </div>
         </div>
     `;
@@ -77,14 +91,18 @@ function openDetails(city) {
 
 // 5. Markerləri Xəritəyə Düz
 function displayCities(cities) {
+    // Əvvəlki markerləri təmizləmək üçün (əgər lazımdırsa)
     cities.forEach(city => {
-        const lat = city.lat || 40.4;
-        const lon = city.lon || 49.8;
+        const lat = city.lat;
+        const lon = city.lon;
         
-        const marker = L.marker([lat, lon]).addTo(map);
+        // Kiçik ikonu burada tətbiq edirik
+        const marker = L.marker([lat, lon], { icon: smallIcon }).addTo(map);
         
         marker.on('click', () => {
+            // Sidebar-da datanı göstərən əsas funksiyanı çağırırıq
             openDetails(city);
+            // Şəhərə fokuslanmaq
             map.flyTo([lat, lon], 10, { duration: 1.5 });
         });
     });
