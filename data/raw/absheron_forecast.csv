@@ -1,0 +1,8 @@
+city,time,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,relative_humidity_2m_mean,pressure_msl_mean,cloud_cover_mean,shortwave_radiation_sum,apparent_temperature_max,weather_code,latitude,longitude
+Absheron,2026-04-21,11.1,9.6,10.5,3.2,2.8,0.0,27.1,46.8,84,1014.1,97,7.07,8.6,61,40.49,49.75
+Absheron,2026-04-22,18.8,9.0,13.1,0.0,0.0,0.0,22.5,40.0,76,1011.5,52,21.58,17.5,3,40.49,49.75
+Absheron,2026-04-23,13.2,9.5,11.7,0.0,0.0,0.0,24.1,42.1,81,1009.7,62,13.94,11.0,45,40.49,49.75
+Absheron,2026-04-24,15.0,8.6,11.4,0.0,0.0,0.0,24.8,43.9,82,1009.4,76,18.08,14.3,3,40.49,49.75
+Absheron,2026-04-25,12.6,9.7,11.1,0.0,0.0,0.0,40.3,73.4,76,1018.5,61,20.33,9.0,3,40.49,49.75
+Absheron,2026-04-26,17.5,9.4,13.6,0.0,0.0,0.0,34.1,56.9,78,1013.2,94,17.98,13.1,3,40.49,49.75
+Absheron,2026-04-27,26.8,10.5,17.2,0.4,0.0,0.0,51.4,87.1,72,1003.0,52,24.33,24.4,45,40.49,49.75

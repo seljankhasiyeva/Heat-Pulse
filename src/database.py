@@ -4,13 +4,13 @@ Task 2 (Day 3) — Database setup + incremental loading support (Day 5 update)
 
 Public API
 ----------
-get_connection(db_path)           → DuckDB connection
-create_schemas(conn)              → ensures raw / staging / analytics schemas exist
-create_raw_tables(conn)           → creates raw_historical + raw_forecast if not present
-load_raw_data(conn, data_dir)     → FULL load from CSV/Parquet → raw tables
-load_incremental(conn, df, city)  → INCREMENTAL append of new rows only
-get_latest_date(conn, city)       → last date stored for a city
-row_counts(conn)                  → summary dict per table
+get_connection(db_path)             → DuckDB connection
+create_schemas(conn)               → ensures raw / staging / analytics schemas exist
+create_raw_tables(conn)            → creates raw_historical + raw_forecast if not present
+load_raw_data(conn, data_dir)      → FULL load from CSV/Parquet → raw tables
+load_incremental(conn, df, city)   → INCREMENTAL append of new rows only
+get_latest_date(conn, city)        → last date stored for a city
+row_counts(conn)                   → summary dict per table
 """
 
 from __future__ import annotations
