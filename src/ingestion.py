@@ -2,12 +2,15 @@ import requests
 import pandas as pd
 import time
 import os
-from datetime import datetime
+import logging
+from datetime import datetime, timedelta
 
 # Configuration Limits
 RATE_LIMIT_DELAY = 20.0
 RATE_LIMIT_EXCEEDED_DELAY = 600
 MAX_RETRIES = 3  # As per task requirement
+
+logger = logging.getLogger(__name__)
 
 # --- 1. HISTORICAL FUNCTION ---
 def fetch_historical(city_name, latitude, longitude, start_date, end_date, variables):
@@ -33,9 +36,8 @@ def fetch_historical(city_name, latitude, longitude, start_date, end_date, varia
                     raise ValueError(f"Malformed response for {city_name}")
                 
                 df = pd.DataFrame(data["daily"])
-                df.insert(0, 'city', city_name)
-                # Renaming 'time' to 'date' as per task requirement
-                df.rename(columns={'time': 'date'}, inplace=True)
+                df.insert(0, 'city', city_name.lower())
+                # Keep 'time' column name as expected by pipeline.py
                 
                 # Save locally
                 df.to_csv(f"{city_name.lower()}_historical.csv", index=False)
@@ -76,8 +78,8 @@ def fetch_forecast(city_name, latitude, longitude, variables):
                     raise ValueError(f"Empty or malformed forecast for {city_name}")
                 
                 df = pd.DataFrame(data["daily"])
-                df.insert(0, 'city', city_name)
-                df.rename(columns={'time': 'date'}, inplace=True)
+                df.insert(0, 'city', city_name.lower())
+                # Keep 'time' column name as expected by pipeline.py
                 
                 df.to_csv(f"{city_name.lower()}_forecast.csv", index=False)
                 return df
@@ -101,13 +103,13 @@ def fetch_all_cities(cities_config, start_date, end_date, variables):
         # Fetch Historical
         if not os.path.exists(f"{city_name.lower()}_historical.csv"):
             print(f"Fetching historical data for: {city_name}...")
-            df_hist = fetch_historical(city_name, city['lat'], city['lon'], start_date, end_date, variables)
+            df_hist = fetch_historical(city_name, city['latitude'], city['longitude'], start_date, end_date, variables)
             all_city_data[city_name] = df_hist
             time.sleep(RATE_LIMIT_DELAY) 
         
         # Fetch Forecast
         print(f"Fetching forecast for: {city_name}...")
-        fetch_forecast(city_name, city['lat'], city['lon'], variables)
+        fetch_forecast(city_name, city['latitude'], city['longitude'], variables)
         time.sleep(1)
 
     print("✅ INGESTION TASK COMPLETED!")
