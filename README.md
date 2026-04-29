@@ -128,17 +128,7 @@ We use the **Open-Meteo API** to bridge historical weather patterns with real-ti
 * **ML & Stats:** Scikit-learn, Scipy, XGBoost.
 * **Visualization:** Seaborn, Plotly.
 
-**Team name:** sPySci🌶️
-
-**Team members:** Jabrail Atakishiyev, Firuddin Rzayev, Zarifa Musayeva, Seljan Khasiyeva
-
-18.04.2026-https://us05web.zoom.us/j/82189687654?pwd=cIbCgnQV6JBB5xSXuhd56NaP2ViEHL.1
-
-19.04.2026-https://meet.google.com/rnv-yukg-nyf
-
-23.04.2026  10:00 -https://meet.google.com/rss-stmv-qxw
-
-25.04.2026  20:00 -[meet.google.com/gqt-jjoy-vup](http://meet.google.com/gqt-jjoy-vup)
+## Daily Activities
 
 | Days | **Work Done** |
 | --- | --- |
