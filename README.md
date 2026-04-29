@@ -12,7 +12,7 @@ This project develops an end-to-end weather intelligence pipeline to identify da
 ## 2. Data Sources & Variables
 We use the **Open-Meteo API** to bridge historical weather patterns with real-time forecasts.
 
-* **Locations (10 Cities):** Baku, Ganja, Sumqayit, Nakhchivan, Lankaran, Tabriz (IR), Tbilisi (GE), Yerevan (AM), Makhachkala (RU), Turkmenbashi (TM).
+* **Locations (94 Cities):** Baku (AZ), Ganja (AZ), Nakhchivan (AZ), Sumqayit (AZ), Lankaran (AZ), Mingachevir (AZ), Naftalan (AZ), Khankendi (AZ), Sheki (AZ), Shirvan (AZ), Yevlakh (AZ), Khirdalan (AZ), Agjabadi (AZ), Agdam (AZ), Agdash (AZ), Agdere (AZ), Agstafa (AZ), Agsu (AZ), Astara (AZ), Babek (AZ), Balakan (AZ), Beylagan (AZ), Barda (AZ), Bilesuvar (AZ), Jabrayil (AZ), Jalilabad (AZ), Julfa (AZ), Dashkasan (AZ), Fuzuli (AZ), Gadabay (AZ), Goranboy (AZ), Goychay (AZ), Goygol (AZ), Hajigabul (AZ), Khachmaz (AZ), Khizi (AZ), Khojaly (AZ), Khojavend (AZ), Imishli (AZ), Ismayilli (AZ), Kalbajar (AZ), Kangarli (AZ), Kurdamir (AZ), Kakh (AZ), Gazakh (AZ), Gabala (AZ), Gobustan (AZ), Guba (AZ), Gubadli (AZ), Gusar (AZ), Lachin (AZ), Lerik (AZ), Masalli (AZ), Neftchala (AZ), Oghuz (AZ), Ordubad (AZ), Saatli (AZ), Sabirabad (AZ), Salyan (AZ), Samukh (AZ), Sadarak (AZ), Siyazan (AZ), Shabran (AZ), Shahbuz (AZ), Shamakhi (AZ), Shamkir (AZ), Sharur (AZ), Shusha (AZ), Tartar (AZ), Tovuz (AZ), Ujar (AZ), Yardimli (AZ), Zagatala (AZ), Zangilan (AZ), Zardab (AZ), Rasht (IR), Sari (IR), Gorgan (IR), Bandar-e Anzali (IR), Makhachkala (RU), Derbent (RU), Yerevan (AM), Gyumri (AM), Erzurum (TR), Van (TR), Malatya (TR), Tbilisi (GE), Batumi (GE), Kutaisi (GE), Atyrau (KZ), Aktau (KZ), Oral (KZ), Turkmenbashi (TM), Balkanabat (TM).
 * **Data Scope:** 5+ years of historical daily data and 7-day real-time forecasts.
 * **Key Variables:** Temperature (Max/Min/Mean/Apparent), Humidity, Solar Radiation, Wind Speed, Pressure, and Weathercode.
 
@@ -115,7 +115,7 @@ We use the **Open-Meteo API** to bridge historical weather patterns with real-ti
 
 ---
 
-## 3. Success Criteria
+## 4. Success Criteria
 * **Model Recall:** Achieving **>80% Recall** for "Critical" heat days to minimize missed alerts.
 * **Reliability:** A robust pipeline using **DuckDB** for efficient large-scale data processing.
 * **Impact:** Aligning model alerts with historical failure dates (backtesting).
