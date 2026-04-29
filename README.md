@@ -123,7 +123,7 @@ We use the **Open-Meteo API** to bridge historical weather patterns with real-ti
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 * **Data Engineering:** DuckDB, Apache Arrow, Python.
 * **ML & Stats:** Scikit-learn, Scipy, XGBoost.
 * **Visualization:** Seaborn, Plotly.
@@ -140,5 +140,6 @@ We use the **Open-Meteo API** to bridge historical weather patterns with real-ti
 | 27.04.2026 |  |
 | 28.04.2026 |  |
 | 29.04.2026 |  |
+| 30.04.2026 |  |
 
 ---
