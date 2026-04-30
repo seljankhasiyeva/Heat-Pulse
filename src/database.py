@@ -1,342 +1,339 @@
 """
 src/database.py
-Task 2 (Day 3) — Database setup + incremental loading support (Day 5 update)
+===============
+DuckDB interfeysi — Heat-Pulse Weather Intelligence Pipeline.
 
-Public API
-----------
-get_connection(db_path)           → DuckDB connection
-create_schemas(conn)              → ensures raw / staging / analytics schemas exist
-create_raw_tables(conn)           → creates raw_historical + raw_forecast if not present
-load_raw_data(conn, data_dir)     → FULL load from CSV/Parquet → raw tables
-load_incremental(conn, df, city)  → INCREMENTAL append of new rows only
-get_latest_date(conn, city)       → last date stored for a city
-row_counts(conn)                  → summary dict per table
+Cədvəl strukturu (cleaning.py / features.py ilə uyğun):
+  raw_historical       → API / CSV-dən gələn xam məlumat
+  raw_forecast         → Xam 7 günlük proqnoz
+  staging_historical   → cleaning.py tərəfindən yaradılır
+  staging_forecast     → cleaning.py tərəfindən yaradılır
+  analytics_historical → features.py tərəfindən yaradılır
+  analytics_forecast   → features.py tərəfindən yaradılır
+  pipeline_runs        → Pipeline audit loqu
 """
 
-from __future__ import annotations
-
-import logging
-from datetime import date, timedelta
-from pathlib import Path
-from typing import Optional
-
+import duckdb
 import pandas as pd
-
-try:
-    import duckdb
-except ImportError:
-    raise ImportError("duckdb is required.  Run: pip install duckdb")
+import logging
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Column schema for raw_historical
-# ─────────────────────────────────────────────────────────────────────────────
-RAW_HISTORICAL_DDL = """
-CREATE TABLE IF NOT EXISTS raw_historical (
-    city                      VARCHAR,
-    time                      DATE,
-    temperature_2m_max        DOUBLE,
-    temperature_2m_min        DOUBLE,
-    temperature_2m_mean       DOUBLE,
-    precipitation_sum         DOUBLE,
-    rain_sum                  DOUBLE,
-    snowfall_sum              DOUBLE,
-    wind_speed_10m_max        DOUBLE,
-    wind_gusts_10m_max        DOUBLE,
-    relative_humidity_2m_mean DOUBLE,
-    pressure_msl_mean         DOUBLE,
-    cloud_cover_mean          DOUBLE,
-    shortwave_radiation_sum   DOUBLE,
-    apparent_temperature_max  DOUBLE,
-    weather_code              INTEGER,
-    PRIMARY KEY (city, time)
-)
-"""
+DB_PATH  = Path("data/weather.duckdb")
+DATA_DIR = Path("data")
 
-RAW_FORECAST_DDL = """
-CREATE TABLE IF NOT EXISTS raw_forecast (
-    city                      VARCHAR,
-    time                      DATE,
-    temperature_2m_max        DOUBLE,
-    temperature_2m_min        DOUBLE,
-    temperature_2m_mean       DOUBLE,
-    precipitation_sum         DOUBLE,
-    rain_sum                  DOUBLE,
-    snowfall_sum              DOUBLE,
-    wind_speed_10m_max        DOUBLE,
-    wind_gusts_10m_max        DOUBLE,
-    relative_humidity_2m_mean DOUBLE,
-    pressure_msl_mean         DOUBLE,
-    cloud_cover_mean          DOUBLE,
-    shortwave_radiation_sum   DOUBLE,
-    apparent_temperature_max  DOUBLE,
-    weather_code              INTEGER,
-    PRIMARY KEY (city, time)
-)
-"""
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Connection
+# Əlaqə
 # ─────────────────────────────────────────────────────────────────────────────
 
-def get_connection(db_path: str | Path = "data/weather.duckdb") -> "duckdb.DuckDBPyConnection":
-    """
-    Return a DuckDB connection, creating the database file (and parent dirs)
-    if they do not yet exist.
-    """
-    path = Path(db_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    conn = duckdb.connect(str(path))
-    logger.info(f"Connected to DuckDB: {path.resolve()}")
+def get_connection(db_path=DB_PATH) -> duckdb.DuckDBPyConnection:
+    """DuckDB faylını açır (yoxdursa yaradır) və əlaqəni qaytarır."""
+    Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+    conn = duckdb.connect(str(db_path))
+    logger.debug(f"DuckDB-yə qoşuldu: {db_path}")
     return conn
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Schema creation
+# Sxem yaratma
 # ─────────────────────────────────────────────────────────────────────────────
 
-def create_schemas(conn: "duckdb.DuckDBPyConnection") -> None:
+def create_schema(conn: duckdb.DuckDBPyConnection) -> None:
     """
-    Create the raw, staging, and analytics schemas if they do not exist.
-    DuckDB uses schemas to logically separate pipeline layers.
-    """
-    for schema in ("raw", "staging", "analytics"):
-        conn.execute(f"CREATE SCHEMA IF NOT EXISTS {schema}")
-    logger.info("Schemas ensured: raw, staging, analytics")
-
-
-def create_raw_tables(conn: "duckdb.DuckDBPyConnection") -> None:
-    """
-    Create raw_historical and raw_forecast tables inside RAW schema.
+    raw_historical, raw_forecast və pipeline_runs cədvəllərini yaradır.
+    staging_* və analytics_* cədvəlləri cleaning.py / features.py tərəfindən
+    CREATE OR REPLACE ilə yaradılır.
     """
     conn.execute("""
-        CREATE TABLE IF NOT EXISTS raw.raw_historical (
-            city                      VARCHAR,
-            time                      DATE,
-            temperature_2m_max        DOUBLE,
-            temperature_2m_min        DOUBLE,
-            temperature_2m_mean       DOUBLE,
-            precipitation_sum         DOUBLE,
-            rain_sum                  DOUBLE,
-            snowfall_sum              DOUBLE,
-            wind_speed_10m_max        DOUBLE,
-            wind_gusts_10m_max        DOUBLE,
-            relative_humidity_2m_mean DOUBLE,
-            pressure_msl_mean         DOUBLE,
-            cloud_cover_mean          DOUBLE,
-            shortwave_radiation_sum   DOUBLE,
-            apparent_temperature_max  DOUBLE,
-            weather_code              INTEGER
+        CREATE TABLE IF NOT EXISTS raw_historical (
+            time                       VARCHAR,
+            city                       VARCHAR,
+            latitude                   DOUBLE,
+            longitude                  DOUBLE,
+            temperature_2m_max         DOUBLE,
+            temperature_2m_min         DOUBLE,
+            temperature_2m_mean        DOUBLE,
+            precipitation_sum          DOUBLE,
+            rain_sum                   DOUBLE,
+            snowfall_sum               DOUBLE,
+            wind_speed_10m_max         DOUBLE,
+            wind_gusts_10m_max         DOUBLE,
+            pressure_msl_mean          DOUBLE,
+            shortwave_radiation_sum    DOUBLE,
+            apparent_temperature_max   DOUBLE,
+            weather_code               DOUBLE,
+            PRIMARY KEY (time, city)
         )
     """)
 
     conn.execute("""
-        CREATE TABLE IF NOT EXISTS raw.raw_forecast (
-            city                      VARCHAR,
-            time                      DATE,
-            temperature_2m_max        DOUBLE,
-            temperature_2m_min        DOUBLE,
-            temperature_2m_mean       DOUBLE,
-            precipitation_sum         DOUBLE,
-            rain_sum                  DOUBLE,
-            snowfall_sum              DOUBLE,
-            wind_speed_10m_max        DOUBLE,
-            wind_gusts_10m_max        DOUBLE,
-            relative_humidity_2m_mean DOUBLE,
-            pressure_msl_mean         DOUBLE,
-            cloud_cover_mean          DOUBLE,
-            shortwave_radiation_sum   DOUBLE,
-            apparent_temperature_max  DOUBLE,
-            weather_code              INTEGER
+        CREATE TABLE IF NOT EXISTS raw_forecast (
+            time                       VARCHAR,
+            city                       VARCHAR,
+            latitude                   DOUBLE,
+            longitude                  DOUBLE,
+            temperature_2m_max         DOUBLE,
+            temperature_2m_min         DOUBLE,
+            temperature_2m_mean        DOUBLE,
+            precipitation_sum          DOUBLE,
+            rain_sum                   DOUBLE,
+            snowfall_sum               DOUBLE,
+            wind_speed_10m_max         DOUBLE,
+            wind_gusts_10m_max         DOUBLE,
+            pressure_msl_mean          DOUBLE,
+            shortwave_radiation_sum    DOUBLE,
+            apparent_temperature_max   DOUBLE,
+            weather_code               DOUBLE,
+            PRIMARY KEY (time, city)
         )
     """)
 
-    logger.info("Raw tables ensured in schema: raw")
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS pipeline_runs (
+            run_id          INTEGER PRIMARY KEY,
+            run_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            mode            VARCHAR,
+            cities_count    INTEGER,
+            rows_raw        INTEGER,
+            rows_staging    INTEGER,
+            rows_analytics  INTEGER,
+            duration_sec    DOUBLE,
+            status          VARCHAR,
+            notes           VARCHAR
+        )
+    """)
+
+    logger.info("Sxem yoxlandı / yaradıldı.")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Full load (Day 3 original)
+# Xam məlumat normallaşdırma
 # ─────────────────────────────────────────────────────────────────────────────
 
-def load_raw_data(
-    conn: "duckdb.DuckDBPyConnection",
-    data_dir: str | Path = "data",
-) -> dict:
+def _normalise_raw(df: pd.DataFrame) -> pd.DataFrame:
     """
-    FULL load: read CSV/Parquet files from data_dir and insert into raw tables.
-    Existing data is replaced (DROP + recreate + INSERT).
-
-    Looks for (in order):
-        historical → raw.parquet > raw_historical.parquet > all_*historical*.csv
-        forecast   → forecast.parquet > raw_forecast.parquet > all_*forecast*.csv
-
-    Returns a summary dict with row counts.
+    time sütununu YYYY-MM-DD formatına gətirir.
+    Çatışmayan sütunları None ilə əlavə edir.
     """
-    data_dir = Path(data_dir)
-    create_raw_tables(conn)
-    summary = {}
+    df = df.copy()
+    df["time"] = pd.to_datetime(df["time"]).dt.strftime("%Y-%m-%d")
 
-    def _load_one(table: str, candidates: list[Path]) -> int:
-        for p in candidates:
-            if p.exists():
-                logger.info(f"  Loading {p.name} → {table}")
-                conn.execute(f"DELETE FROM {table}")
-                if p.suffix == ".parquet":
-                    conn.execute(
-                        f"INSERT INTO {table} SELECT * FROM read_parquet('{p}')"
-                    )
-                else:
-                    conn.execute(
-                        f"INSERT INTO {table} SELECT * FROM read_csv_auto('{p}')"
-                    )
-                n = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
-                logger.info(f"  {table}: {n:,} rows loaded.")
-                return n
-        logger.warning(f"  No source file found for {table}. Looked in: {[str(c) for c in candidates]}")
-        return 0
-
-    hist_candidates = [
-        data_dir / "raw.parquet",
-        data_dir / "raw_historical.parquet",
-        *sorted(data_dir.glob("*historical*.csv")),
-        *sorted(data_dir.glob("all_*historical*.csv")),
+    raw_cols = [
+        "time", "city", "latitude", "longitude",
+        "temperature_2m_max", "temperature_2m_min", "temperature_2m_mean",
+        "precipitation_sum", "rain_sum", "snowfall_sum",
+        "wind_speed_10m_max", "wind_gusts_10m_max",
+        "pressure_msl_mean", "shortwave_radiation_sum",
+        "apparent_temperature_max", "weather_code",
     ]
-    fc_candidates = [
-        data_dir / "forecast.parquet",
-        data_dir / "raw_forecast.parquet",
-        *sorted(data_dir.glob("*forecast*.csv")),
-    ]
+    for col in raw_cols:
+        if col not in df.columns:
+            df[col] = None
 
-    summary["raw_historical"] = _load_one("raw.raw_historical", hist_candidates)
-    summary["raw_forecast"]   = _load_one("raw.raw_forecast",   fc_candidates)
-    return summary
+    return df[raw_cols]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Incremental loading (Day 5 addition)
+# Xam məlumat yükləmə
 # ─────────────────────────────────────────────────────────────────────────────
 
-def get_latest_date(
-    conn: "duckdb.DuckDBPyConnection",
-    city: str,
-    table: str = "raw.raw_historical",
-) -> Optional[date]:
-    """
-    Return the most recent date stored for *city* in *table*.
-    Returns None if the table is empty or the city has no rows yet.
-    """
-    try:
-        row = conn.execute(
-            f"SELECT MAX(time) FROM {table} WHERE city = ?",
-            [city.lower()],
-        ).fetchone()
-        return row[0] if row and row[0] is not None else None
-    except Exception:
-        return None
-
-
-def load_incremental(
-    conn:  "duckdb.DuckDBPyConnection",
-    df:    pd.DataFrame,
-    table: str = "raw.raw_historical",
+def load_raw_historical(
+    conn: duckdb.DuckDBPyConnection,
+    df: pd.DataFrame,
+    mode: str = "append",
 ) -> int:
     """
-    Append only the rows in *df* that are NOT already in *table*.
-
-    Deduplication is done on (city, time).  This avoids primary-key
-    constraint issues while still being safe to call repeatedly.
-
-    Returns the number of rows actually inserted.
+    DataFrame-i raw_historical cədvəlinə yükləyir.
+    mode='append'  → INSERT OR REPLACE (upsert)
+    mode='replace' → Əvvəlcə bütün cədvəli sil, sonra yüklə
     """
-    if df.empty:
+    if df is None or df.empty:
+        logger.warning("load_raw_historical: boş DataFrame — yüklənmir.")
         return 0
 
-    # Normalise
-    df = df.copy()
-    df["time"] = pd.to_datetime(df["time"]).dt.date
-    if "city" in df.columns:
-        df["city"] = df["city"].str.lower()
+    df = _normalise_raw(df)
 
-    # Find what is already stored for each city in this batch
-    cities_in_batch = df["city"].unique().tolist()
-    placeholders    = ", ".join(["?" for _ in cities_in_batch])
-    try:
-        existing = conn.execute(
-            f"SELECT city, time FROM {table} WHERE city IN ({placeholders})",
-            cities_in_batch,
-        ).df()
-        existing["time"] = pd.to_datetime(existing["time"]).dt.date
-        existing_keys = set(zip(existing["city"], existing["time"]))
-    except Exception:
-        existing_keys = set()
+    if mode == "replace":
+        conn.execute("DELETE FROM raw_historical")
+        logger.info("raw_historical tam yenilənmə üçün təmizləndi.")
 
-    # Keep only new rows
-    mask    = ~df.apply(lambda row: (row["city"], row["time"]) in existing_keys, axis=1)
-    new_df  = df[mask]
+    conn.register("_rh", df)
+    conn.execute("""
+        INSERT OR REPLACE INTO raw_historical
+        SELECT
+            time, city, latitude, longitude,
+            temperature_2m_max, temperature_2m_min, temperature_2m_mean,
+            precipitation_sum, rain_sum, snowfall_sum,
+            wind_speed_10m_max, wind_gusts_10m_max,
+            pressure_msl_mean, shortwave_radiation_sum,
+            apparent_temperature_max, weather_code
+        FROM _rh
+    """)
+    conn.unregister("_rh")
+    logger.info(f"raw_historical-a {len(df):,} sətir yükləndi.")
+    return len(df)
 
-    if new_df.empty:
-        logger.info(f"  No new rows to insert into {table}.")
+
+def load_raw_forecast(
+    conn: duckdb.DuckDBPyConnection,
+    df: pd.DataFrame,
+) -> int:
+    """raw_forecast cədvəlinə proqnozu yükləyir (həmişə əvəzlənir)."""
+    if df is None or df.empty:
         return 0
-
-    conn.register("_tmp_incremental", new_df)
-    conn.execute(f"INSERT INTO {table} SELECT * FROM _tmp_incremental")
-    conn.unregister("_tmp_incremental")
-
-    logger.info(f"  Incremental insert: {len(new_df):,} new rows → {table}")
-    return len(new_df)
+    df = _normalise_raw(df)
+    conn.execute("DELETE FROM raw_forecast")
+    conn.register("_rf", df)
+    conn.execute("""
+        INSERT INTO raw_forecast
+        SELECT
+            time, city, latitude, longitude,
+            temperature_2m_max, temperature_2m_min, temperature_2m_mean,
+            precipitation_sum, rain_sum, snowfall_sum,
+            wind_speed_10m_max, wind_gusts_10m_max,
+            pressure_msl_mean, shortwave_radiation_sum,
+            apparent_temperature_max, weather_code
+        FROM _rf
+    """)
+    conn.unregister("_rf")
+    logger.info(f"raw_forecast-a {len(df):,} sətir yükləndi.")
+    return len(df)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Utilities
+# Parquet ixracı (cleaning.py üçün lazımdır)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def row_counts(conn: "duckdb.DuckDBPyConnection") -> dict:
+def save_raw_as_parquet(
+    conn: duckdb.DuckDBPyConnection,
+    data_dir=DATA_DIR,
+) -> None:
     """
-    Return a summary dict: table_name → row_count for all pipeline tables.
+    raw_historical → data/raw.parquet         (cleaning.py bunu axtarır)
+    raw_historical → data/raw_historical.parquet
+    raw_forecast   → data/raw_forecast.parquet
     """
-    tables = [
-    "raw.raw_historical", "raw.raw_forecast",
-    "staging.staging_historical", "staging.staging_forecast",
-    "analytics.analytics_historical", "analytics.analytics_forecast",
+    data_dir = Path(data_dir)
+    data_dir.mkdir(parents=True, exist_ok=True)
+
+    exports = [
+        ("raw_historical", "raw.parquet"),
+        ("raw_historical", "raw_historical.parquet"),
+        ("raw_forecast",   "raw_forecast.parquet"),
     ]
-    counts = {}
-    for t in tables:
+    for table, fname in exports:
         try:
-            n = conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
-            counts[t] = n
-        except Exception:
-            counts[t] = None   # table doesn't exist yet
-    return counts
-
-
-def print_row_counts(conn: "duckdb.DuckDBPyConnection") -> None:
-    counts = row_counts(conn)
-    print("\n── Table row counts ─────────────────────────────────")
-    for table, n in counts.items():
-        status = f"{n:>12,}" if n is not None else "  (not created)"
-        print(f"  {table:<30} {status}")
-    print("─────────────────────────────────────────────────────\n")
+            df = conn.execute(f"SELECT * FROM {table}").df()
+            out = data_dir / fname
+            df.to_parquet(out, index=False)
+            logger.info(f"{len(df):,} sətir saxlandı → {out}")
+        except Exception as e:
+            logger.warning(f"{table} → {fname} saxlanıla bilmədi: {e}")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Quick standalone test
+# İnkremental yardımçılar
 # ─────────────────────────────────────────────────────────────────────────────
-if __name__ == "__main__":
-    import os
-    DB_PATH  = os.environ.get("DB_PATH",  "data/weather.duckdb")
-    DATA_DIR = os.environ.get("DATA_DIR", "data")
 
-    logging.basicConfig(level=logging.INFO,
-                        format="%(asctime)s [%(levelname)s] %(message)s")
+def get_latest_dates(conn: duckdb.DuckDBPyConnection) -> dict:
+    """
+    raw_historical-dan {city: son_tarix_str} lüğəti qaytarır.
+    İnkremental yükləmədə başlanğıc tarixi müəyyən etmək üçün istifadə olunur.
+    """
+    try:
+        rows = conn.execute(
+            "SELECT city, MAX(time) AS max_time FROM raw_historical GROUP BY city"
+        ).fetchall()
+        result = {row[0]: row[1] for row in rows}
+        logger.info(f"{len(result)} şəhər üçün son tarix alındı.")
+        return result
+    except Exception as e:
+        logger.warning(f"Son tarixlər oxuna bilmədi: {e}")
+        return {}
 
-    conn = get_connection(DB_PATH)
-    create_schemas(conn)
-    create_raw_tables(conn)
 
-    print("Loading raw data …")
-    summary = load_raw_data(conn, data_dir=DATA_DIR)
-    print(f"Loaded: {summary}")
+def get_row_count(conn: duckdb.DuckDBPyConnection, table: str) -> int:
+    """Cədvəldəki sətir sayını qaytarır. Cədvəl yoxdursa 0 qaytarır."""
+    try:
+        return conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+    except Exception:
+        return 0
 
-    print_row_counts(conn)
-    conn.close()
+
+def table_exists(conn: duckdb.DuckDBPyConnection, table_name: str) -> bool:
+    """Cədvəlin mövcudluğunu yoxlayır."""
+    try:
+        conn.execute(f"SELECT 1 FROM {table_name} LIMIT 1")
+        return True
+    except Exception:
+        return False
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Audit loqu
+# ─────────────────────────────────────────────────────────────────────────────
+
+def log_pipeline_run(
+    conn: duckdb.DuckDBPyConnection,
+    mode: str,
+    cities_count: int,
+    rows_raw: int,
+    rows_staging: int,
+    rows_analytics: int,
+    duration_sec: float,
+    status: str,
+    notes: str = "",
+) -> None:
+    """Pipeline icrasının qeydini pipeline_runs cədvəlinə yazır."""
+    try:
+        next_id = conn.execute(
+            "SELECT COALESCE(MAX(run_id), 0) + 1 FROM pipeline_runs"
+        ).fetchone()[0]
+        conn.execute("""
+            INSERT INTO pipeline_runs
+                (run_id, mode, cities_count, rows_raw, rows_staging,
+                 rows_analytics, duration_sec, status, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, [
+            next_id, mode, cities_count,
+            rows_raw, rows_staging, rows_analytics,
+            round(duration_sec, 2), status, notes,
+        ])
+        logger.info(f"Pipeline icra #{next_id} qeyd edildi: {status}")
+    except Exception as e:
+        logger.warning(f"Audit loqu yazıla bilmədi: {e}")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Verilənlər bazası icmalı
+# ─────────────────────────────────────────────────────────────────────────────
+
+def get_table_summary(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
+    """Bütün pipeline cədvəllərinin sətir sayını qaytarır."""
+    tables = [
+        "raw_historical", "raw_forecast",
+        "staging_historical", "staging_forecast",
+        "analytics_historical", "analytics_forecast",
+        "pipeline_runs",
+    ]
+    return pd.DataFrame([
+        {"table": t, "row_count": get_row_count(conn, t)}
+        for t in tables
+    ])
+
+
+def print_row_counts(conn: duckdb.DuckDBPyConnection) -> None:
+    """
+    Bütün cədvəllərin sətir sayını ekrana çıxarır.
+    Notebook-dan rahat çağırmaq üçündür.
+    """
+    summary = get_table_summary(conn)
+    print("\n" + "=" * 45)
+    print("  VERİLƏNLƏR BAZASI — CƏDVƏLLƏRİN SƏTIR SAYI")
+    print("=" * 45)
+    for _, row in summary.iterrows():
+        bar = "█" * min(int(row["row_count"] / 5000), 30)
+        print(f"  {row['table']:<25} {row['row_count']:>10,}  {bar}")
+    print("=" * 45 + "\n")
