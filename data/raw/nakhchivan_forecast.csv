@@ -1,0 +1,8 @@
+city,time,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,relative_humidity_2m_mean,pressure_msl_mean,cloud_cover_mean,shortwave_radiation_sum,apparent_temperature_max,weather_code,latitude,longitude
+Nakhchivan,2026-04-21,16.0,10.2,12.4,15.5,0.6,0.0,9.3,26.6,81,1008.7,97,17.07,16.5,95,39.21,45.41
+Nakhchivan,2026-04-22,19.3,9.4,13.6,2.8,0.0,0.0,6.8,13.3,66,1012.0,46,24.8,19.0,95,39.21,45.41
+Nakhchivan,2026-04-23,21.9,7.7,14.8,0.0,0.0,0.0,19.5,33.5,55,1009.3,34,23.22,21.1,2,39.21,45.41
+Nakhchivan,2026-04-24,23.5,9.2,16.5,0.0,0.0,0.0,18.4,36.0,53,1008.6,82,21.15,22.0,3,39.21,45.41
+Nakhchivan,2026-04-25,24.5,8.9,17.0,0.0,0.0,0.0,14.7,31.0,56,1013.4,50,25.19,24.5,3,39.21,45.41
+Nakhchivan,2026-04-26,22.5,13.5,17.1,1.65,0.0,0.0,9.8,34.2,62,1011.7,96,18.7,22.7,80,39.21,45.41
+Nakhchivan,2026-04-27,20.4,11.2,16.0,13.3,0.0,0.0,25.4,46.4,65,1004.4,92,17.58,18.7,95,39.21,45.41

@@ -1,0 +1,8 @@
+city,time,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum,wind_speed_10m_max,wind_gusts_10m_max,relative_humidity_2m_mean,pressure_msl_mean,cloud_cover_mean,shortwave_radiation_sum,apparent_temperature_max,weather_code,latitude,longitude
+Zangilan,2026-04-21,11.7,8.1,9.9,6.0,4.4,0.0,9.5,19.4,89,1013.0,100,5.89,10.4,80,39.08,46.65
+Zangilan,2026-04-22,21.5,8.8,14.0,0.0,0.0,0.0,15.8,31.0,76,1012.2,56,24.45,21.3,45,39.08,46.65
+Zangilan,2026-04-23,25.2,10.4,17.4,0.0,0.0,0.0,20.0,40.0,58,1007.9,41,25.23,22.8,3,39.08,46.65
+Zangilan,2026-04-24,21.7,11.7,15.5,0.0,0.0,0.0,17.6,46.4,73,1008.8,47,23.05,21.7,3,39.08,46.65
+Zangilan,2026-04-25,19.8,10.4,14.9,0.0,0.0,0.0,11.7,24.5,61,1016.9,63,24.26,18.9,3,39.08,46.65
+Zangilan,2026-04-26,18.3,9.5,13.4,0.3,0.3,0.0,8.0,26.6,79,1014.3,99,17.1,18.4,45,39.08,46.65
+Zangilan,2026-04-27,22.6,11.6,17.1,5.8,0.0,0.0,12.3,48.6,65,1003.9,96,17.51,21.2,80,39.08,46.65
