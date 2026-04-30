@@ -68,11 +68,100 @@ DEFAULT_END       = str(date.today())
 
 # ── Cities configuration (mirrors your config.py / config.yaml) ──────────────
 CITIES_CONFIG = [
-    {"name": "Baku",        "latitude": 40.41, "longitude": 49.87},
-    {"name": "Ganja",       "latitude": 40.68, "longitude": 46.36},
-    {"name": "Sumgayit",    "latitude": 40.59, "longitude": 49.67},
-    {"name": "Mingachevir", "latitude": 40.77, "longitude": 47.05},
-    {"name": "Lankaran",    "latitude": 38.75, "longitude": 48.85},
+    {"name": "Baku",        "latitude": 40.3754, "longitude": 49.8327},
+    {"name": "Ganja",       "latitude": 40.6850, "longitude": 46.3500},
+    {"name": "Nakhchivan",  "latitude": 39.2092, "longitude": 45.4122},
+    {"name": "Sumqayit",    "latitude": 40.5800, "longitude": 49.6300},
+    {"name": "Lankaran",    "latitude": 38.7540, "longitude": 48.8511},
+    {"name": "Mingachevir", "latitude": 40.7667, "longitude": 47.0500},
+    {"name": "Naftalan",    "latitude": 40.5072, "longitude": 46.8242},
+    {"name": "Khankendi",   "latitude": 39.8219, "longitude": 46.7725},
+    {"name": "Sheki",       "latitude": 41.1923, "longitude": 47.1705},
+    {"name": "Shirvan",     "latitude": 39.9323, "longitude": 48.9203},
+    {"name": "Yevlakh",     "latitude": 40.6133, "longitude": 47.1492},
+    {"name": "Khirdalan",   "latitude": 40.4500, "longitude": 49.7333},
+    {"name": "Agjabadi",    "latitude": 40.0542, "longitude": 47.4578},
+    {"name": "Agdam",       "latitude": 39.9917, "longitude": 46.9250},
+    {"name": "Agdash",      "latitude": 40.6453, "longitude": 47.4686},
+    {"name": "Agdere",      "latitude": 40.2033, "longitude": 46.8094},
+    {"name": "Agstafa",     "latitude": 41.1208, "longitude": 45.4517},
+    {"name": "Agsu",        "latitude": 40.5739, "longitude": 48.4053},
+    {"name": "Astara",      "latitude": 38.4553, "longitude": 48.8775},
+    {"name": "Babek",       "latitude": 39.1833, "longitude": 45.4000},
+    {"name": "Balakan",     "latitude": 41.7228, "longitude": 46.4056},
+    {"name": "Beylagan",    "latitude": 39.7736, "longitude": 47.6069},
+    {"name": "Barda",       "latitude": 40.3753, "longitude": 47.1336},
+    {"name": "Bilesuvar",   "latitude": 39.4533, "longitude": 48.5536},
+    {"name": "Jabrayil",    "latitude": 39.3969, "longitude": 47.0297},
+    {"name": "Jalilabad",   "latitude": 39.2039, "longitude": 48.4836},
+    {"name": "Julfa",       "latitude": 38.9606, "longitude": 45.6214},
+    {"name": "Dashkasan",   "latitude": 40.5167, "longitude": 46.0833},
+    {"name": "Fuzuli",      "latitude": 39.5967, "longitude": 47.2394},
+    {"name": "Gadabay",     "latitude": 40.5706, "longitude": 45.8114},
+    {"name": "Goranboy",    "latitude": 40.6128, "longitude": 46.7861},
+    {"name": "Goychay",     "latitude": 40.6556, "longitude": 47.7375},
+    {"name": "Goygol",      "latitude": 40.5914, "longitude": 46.3267},
+    {"name": "Hajigabul",   "latitude": 40.0356, "longitude": 48.9328},
+    {"name": "Khachmaz",    "latitude": 41.4633, "longitude": 48.8025},
+    {"name": "Khizi",       "latitude": 40.8525, "longitude": 49.0717},
+    {"name": "Khojaly",     "latitude": 39.8972, "longitude": 46.7900},
+    {"name": "Khojavend",   "latitude": 39.7833, "longitude": 47.1000},
+    {"name": "Imishli",     "latitude": 39.8667, "longitude": 48.0667},
+    {"name": "Ismayilli",   "latitude": 40.7833, "longitude": 48.1500},
+    {"name": "Kalbajar",    "latitude": 40.1014, "longitude": 46.0333},
+    {"name": "Kangarli",    "latitude": 39.3167, "longitude": 45.1667},
+    {"name": "Kurdamir",    "latitude": 40.3325, "longitude": 48.1578},
+    {"name": "Kakh",        "latitude": 41.4172, "longitude": 46.9258},
+    {"name": "Gazakh",      "latitude": 41.0928, "longitude": 45.3614},
+    {"name": "Gabala",      "latitude": 40.9933, "longitude": 47.8467},
+    {"name": "Gobustan",    "latitude": 40.5333, "longitude": 48.9333},
+    {"name": "Guba",        "latitude": 41.3625, "longitude": 48.5111},
+    {"name": "Gubadli",     "latitude": 39.3242, "longitude": 46.5753},
+    {"name": "Gusar",       "latitude": 41.4286, "longitude": 48.4300},
+    {"name": "Lachin",      "latitude": 39.6397, "longitude": 46.5458},
+    {"name": "Lerik",       "latitude": 38.7736, "longitude": 48.4150},
+    {"name": "Masalli",     "latitude": 39.0306, "longitude": 48.6675},
+    {"name": "Neftchala",   "latitude": 39.3667, "longitude": 49.2500},
+    {"name": "Oghuz",       "latitude": 41.0667, "longitude": 47.4500},
+    {"name": "Ordubad",     "latitude": 38.9039, "longitude": 46.0236},
+    {"name": "Saatli",      "latitude": 39.9333, "longitude": 48.3667},
+    {"name": "Sabirabad",   "latitude": 39.9958, "longitude": 48.4775},
+    {"name": "Salyan",      "latitude": 39.5936, "longitude": 48.9750},
+    {"name": "Samukh",      "latitude": 40.7833, "longitude": 46.4500},
+    {"name": "Sadarak",     "latitude": 39.6975, "longitude": 44.8142},
+    {"name": "Siyazan",     "latitude": 41.0736, "longitude": 49.1133},
+    {"name": "Shabran",     "latitude": 41.2167, "longitude": 48.9833},
+    {"name": "Shahbuz",     "latitude": 39.4167, "longitude": 45.5667},
+    {"name": "Shamakhi",    "latitude": 40.6306, "longitude": 48.6347},
+    {"name": "Shamkir",     "latitude": 40.8333, "longitude": 46.0167},
+    {"name": "Sharur",      "latitude": 39.5542, "longitude": 44.9825},
+    {"name": "Shusha",      "latitude": 39.7611, "longitude": 46.7497},
+    {"name": "Tartar",      "latitude": 40.3444, "longitude": 46.9358},
+    {"name": "Tovuz",       "latitude": 40.9917, "longitude": 45.6250},
+    {"name": "Ujar",        "latitude": 40.5056, "longitude": 47.6533},
+    {"name": "Yardimli",    "latitude": 38.8667, "longitude": 48.2333},
+    {"name": "Zagatala",    "latitude": 41.6333, "longitude": 46.6333},
+    {"name": "Zangilan",    "latitude": 39.0769, "longitude": 46.6636},
+    {"name": "Zardab",      "latitude": 40.2167, "longitude": 47.7167},
+    {"name": "Rasht",       "latitude": 37.2808, "longitude": 49.5832},
+    {"name": "Sari",        "latitude": 36.5633, "longitude": 53.0601},
+    {"name": "Gorgan",      "latitude": 36.8416, "longitude": 54.4436},
+    {"name": "Bandar-e Anzali", "latitude": 37.4716, "longitude": 49.4622},
+    {"name": "Makhachkala", "latitude": 42.9764, "longitude": 47.5024},
+    {"name": "Derbent",     "latitude": 42.0678, "longitude": 48.2899},
+    {"name": "Yerevan",     "latitude": 40.1811, "longitude": 44.5136},
+    {"name": "Gyumri",      "latitude": 40.7942, "longitude": 43.8453},
+    {"name": "Erzurum",     "latitude": 39.9086, "longitude": 41.2769},
+    {"name": "Van",         "latitude": 38.4946, "longitude": 43.3832},
+    {"name": "Malatya",     "latitude": 38.3502, "longitude": 38.3167},
+    {"name": "Tbilisi",     "latitude": 41.7151, "longitude": 44.8271},
+    {"name": "Batumi",      "latitude": 41.6423, "longitude": 41.6339},
+    {"name": "Kutaisi",     "latitude": 42.2679, "longitude": 42.6946},
+    {"name": "Atyrau",      "latitude": 47.1167, "longitude": 51.8833},
+    {"name": "Aktau",       "latitude": 43.6481, "longitude": 51.1722},
+    {"name": "Oral",        "latitude": 51.2333, "longitude": 51.3667},
+    {"name": "Turkmenbashi", "latitude": 40.0222, "longitude": 52.9552},
+    {"name": "Balkanabat",  "latitude": 39.5108, "longitude": 54.3671},
 ]
 
 WEATHER_VARIABLES = [
@@ -209,8 +298,13 @@ def get_connection(db_path: Path) -> "duckdb.DuckDBPyConnection":
 
 
 def ensure_raw_table(conn) -> None:
+    # Create schemas if they don't exist
+    conn.execute("CREATE SCHEMA IF NOT EXISTS raw")
+    conn.execute("CREATE SCHEMA IF NOT EXISTS staging") 
+    conn.execute("CREATE SCHEMA IF NOT EXISTS analytics")
+    
     conn.execute("""
-        CREATE TABLE IF NOT EXISTS raw_historical (
+        CREATE TABLE IF NOT EXISTS raw.raw_historical (
             city                      VARCHAR,
             time                      DATE,
             temperature_2m_max        DOUBLE,
@@ -226,7 +320,9 @@ def ensure_raw_table(conn) -> None:
             cloud_cover_mean          DOUBLE,
             shortwave_radiation_sum   DOUBLE,
             apparent_temperature_max  DOUBLE,
-            weather_code              INTEGER
+            weather_code              INTEGER,
+            latitude                  DOUBLE,
+            longitude                 DOUBLE
         )
     """)
 
@@ -235,7 +331,7 @@ def get_latest_date_per_city(conn) -> dict[str, date]:
     """Return a dict: city_name (lower) → latest date in raw_historical."""
     try:
         rows = conn.execute(
-            "SELECT city, MAX(time) AS latest FROM raw_historical GROUP BY city"
+            "SELECT city, MAX(time) AS latest FROM raw.raw_historical GROUP BY city"
         ).fetchall()
         return {row[0].lower(): row[1] for row in rows}
     except Exception:
@@ -270,34 +366,61 @@ def should_run_weekly_update(conn, city_name: str, force_update: bool = False) -
         return False
 
 
+def should_fetch_missing_days(conn, city_name: str, force_update: bool = False) -> bool:
+    """
+    Check if daily update should run for a city to fetch missing days.
+    Returns True if:
+    - No data exists for city, OR
+    - Force update is requested, OR  
+    - There are missing days between max database date and current date
+    """
+    if force_update:
+        return True
+        
+    latest_dates = get_latest_date_per_city(conn)
+    latest_date = latest_dates.get(city_name.lower())
+    
+    if latest_date is None:
+        logger.info(f"  {city_name}: No existing data found - will fetch from 2020-01-01")
+        return True
+    
+    today = date.today()
+    days_since_update = (today - latest_date).days
+    
+    if days_since_update > 0:
+        logger.info(f"  {city_name}: Data is {days_since_update} days old - fetching missing days")
+        return True
+    else:
+        logger.info(f"  {city_name}: Data is up-to-date - no missing days")
+        return False
+
+
 def append_to_raw(conn, df: pd.DataFrame) -> int:
-    """Append a DataFrame to raw_historical. Returns the number of rows inserted."""
+    """Append a DataFrame to raw.raw_historical. Returns the number of rows inserted."""
     if df.empty:
         return 0
     conn.register("_tmp_new", df)
-    conn.execute("INSERT INTO raw_historical SELECT * FROM _tmp_new")
+    conn.execute("INSERT INTO raw.raw_historical SELECT * FROM _tmp_new")
     conn.unregister("_tmp_new")
     return len(df)
 
 
 def load_raw_as_df(conn) -> pd.DataFrame:
-    """Return the entire raw_historical table as a DataFrame."""
+    """Return the entire raw.raw_historical table as a DataFrame."""
     try:
-        return conn.execute("SELECT * FROM raw_historical").df()
+        return conn.execute("SELECT * FROM raw.raw_historical").df()
     except Exception:
         return pd.DataFrame()
-
 
 def load_staging_as_df(conn) -> pd.DataFrame:
     try:
-        return conn.execute("SELECT * FROM staging_historical").df()
+        return conn.execute("SELECT * FROM staging.staging_historical").df()
     except Exception:
         return pd.DataFrame()
 
-
 def load_analytics_as_df(conn) -> pd.DataFrame:
     try:
-        return conn.execute("SELECT * FROM analytics_historical").df()
+        return conn.execute("SELECT * FROM analytics.analytics_historical").df()
     except Exception:
         return pd.DataFrame()
 
@@ -319,7 +442,8 @@ def stage_ingest(
     """
     Ingest stage.
     - full:        recreate raw_historical and fetch all data
-    - incremental: weekly update only (fetch from latest date + 1 day, but only if 7+ days old)
+
+    - incremental: daily update only (fetch from latest date + 1 day to current date)
     """
     fetch_fn = _try_import_ingestion()
     if fetch_fn:
@@ -328,8 +452,8 @@ def stage_ingest(
         logger.info("ingestion.py not found — using built-in Open-Meteo fetcher.")
 
     if mode == "full":
-        logger.info("FULL mode: dropping and recreating raw_historical.")
-        conn.execute("DROP TABLE IF EXISTS raw_historical")
+        logger.info("FULL mode: dropping and recreating raw.raw_historical.")
+        conn.execute("DROP TABLE IF EXISTS raw.raw_historical")
 
     ensure_raw_table(conn)
 
@@ -342,8 +466,9 @@ def stage_ingest(
         name_lower = city["name"].lower()
 
         if mode == "incremental":
-            # Check if weekly update should run
-            if not should_run_weekly_update(conn, city["name"], force_update):
+
+            # Check if daily update should run to fetch missing days
+            if not should_fetch_missing_days(conn, city["name"], force_update):
                 summary["cities_skipped"] += 1
                 continue
                 
@@ -367,6 +492,9 @@ def stage_ingest(
                 logger.warning(f"  {city['name']}: empty response, skipping.")
                 continue
             df["time"] = pd.to_datetime(df["time"]).dt.date
+            # Add coordinates from city config
+            df["latitude"] = city["latitude"]
+            df["longitude"] = city["longitude"]
             # Align dtypes to schema
             for col in variables:
                 if col in df.columns and col != "weather_code":
@@ -503,29 +631,41 @@ def run_pipeline(
         if any(r["status"] == "FAIL" for r in qc_raw):
             raise RuntimeError("Quality gate FAILED after ingest stage — aborting.")
 
-        # ── Stage 2: Clean ───────────────────────────────────────────────────
-        logger.info("\n── Stage 2: CLEAN ──────────────────────────────────────────")
-        clean_summary = stage_clean(conn, data_dir)
-        summary["rows_staging"]  = clean_summary.get("rows_staging", 0)
-        summary["errors"]       += clean_summary.get("errors", [])
-        logger.info(f"  Rows in staging: {clean_summary.get('rows_staging', 0):,}")
+        # ── Stage 2: Clean ───────────────────────────────────────────
+        # Only run cleaning if new data was ingested
+        if ingest_summary.get("rows_ingested", 0) > 0:
+            logger.info("\n── Stage 2: CLEAN ──────────────────────────────────────────")
+            clean_summary = stage_clean(conn, data_dir)
+            summary["rows_staging"]  = clean_summary.get("rows_staging", 0)
+            summary["errors"]       += clean_summary.get("errors", [])
+            logger.info(f"  Rows in staging: {clean_summary.get('rows_staging', 0):,}")
 
-        # Quality check after staging
-        staging_df = load_staging_as_df(conn)
-        qc_staging = run_all_checks(staging_df=staging_df)
-        print_quality_report(qc_staging)
+            # Quality check after staging
+            staging_df = load_staging_as_df(conn)
+            qc_staging = run_all_checks(staging_df=staging_df)
+            print_quality_report(qc_staging)
+        else:
+            logger.info("\n── Stage 2: CLEAN ──────────────────────────────────────────")
+            logger.info("  SKIPPED: No new data to clean")
+            summary["rows_staging"] = 0
 
-        # ── Stage 3: Features ────────────────────────────────────────────────
-        logger.info("\n── Stage 3: FEATURES ───────────────────────────────────────")
-        feat_summary = stage_features(conn)
-        summary["rows_analytics"] = feat_summary.get("rows_analytics", 0)
-        summary["errors"]        += feat_summary.get("errors", [])
-        logger.info(f"  Rows in analytics: {feat_summary.get('rows_analytics', 0):,}")
+        # ── Stage 3: Features ────────────────────────────────────────
+        # Only run features if new data was ingested or cleaned
+        if ingest_summary.get("rows_ingested", 0) > 0 or summary["rows_staging"] > 0:
+            logger.info("\n── Stage 3: FEATURES ───────────────────────────────")
+            feat_summary = stage_features(conn)
+            summary["rows_analytics"] = feat_summary.get("rows_analytics", 0)
+            summary["errors"]        += feat_summary.get("errors", [])
+            logger.info(f"  Rows in analytics: {feat_summary.get('rows_analytics', 0):,}")
 
-        # Quality check after analytics
-        analytics_df = load_analytics_as_df(conn)
-        qc_analytics = run_all_checks(analytics_df=analytics_df)
-        print_quality_report(qc_analytics)
+            # Quality check after analytics
+            analytics_df = load_analytics_as_df(conn)
+            qc_analytics = run_all_checks(analytics_df=analytics_df)
+            print_quality_report(qc_analytics)
+        else:
+            logger.info("\n── Stage 3: FEATURES ───────────────────────────────")
+            logger.info("  SKIPPED: No new data to process")
+            summary["rows_analytics"] = 0
 
     except Exception as exc:
         logger.error(f"Pipeline aborted: {exc}")
@@ -570,7 +710,8 @@ Examples:
     )
     parser.add_argument(
         "--mode", choices=["full", "incremental"], default="incremental",
-        help="full = re-ingest everything; incremental = weekly update only (default: incremental)",
+
+        help="full = re-ingest everything; incremental = daily update only (default: incremental)",
     )
     parser.add_argument("--db-path",  default=str(DEFAULT_DB_PATH),  help="Path to weather.duckdb")
     parser.add_argument("--data-dir", default=str(DEFAULT_DATA_DIR), help="Path to data/ folder")
@@ -578,7 +719,8 @@ Examples:
     parser.add_argument("--cities",   nargs="*", default=None,        help="Specific city names to process")
     parser.add_argument("--start",    default=DEFAULT_START,          help=f"Start date (default: {DEFAULT_START})")
     parser.add_argument("--end",      default=DEFAULT_END,            help=f"End date (default: today)")
-    parser.add_argument("--force-update", action="store_true",       help="Force weekly update regardless of 7-day rule")
+
+    parser.add_argument("--force-update", action="store_true",       help="Force daily update regardless of data freshness")
     return parser.parse_args()
 
 

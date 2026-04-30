@@ -4,26 +4,23 @@ Task 2 (Day 3) — Database setup + incremental loading support (Day 5 update)
 
 Public API
 ----------
-get_connection(db_path)             → DuckDB connection
-create_schemas(conn)               → ensures raw / staging / analytics schemas exist
-create_raw_tables(conn)            → creates raw_historical + raw_forecast if not present
-load_raw_data(conn, data_dir)      → FULL load from CSV/Parquet → raw tables
-load_incremental(conn, df, city)   → INCREMENTAL append of new rows only
-get_latest_date(conn, city)        → last date stored for a city
-row_counts(conn)                   → summary dict per table
+get_connection(db_path)           → DuckDB connection
+create_schemas(conn)              → ensures raw / staging / analytics schemas exist
+create_raw_tables(conn)           → creates raw_historical + raw_forecast if not present
+load_raw_data(conn, data_dir)     → FULL load from CSV/Parquet → raw tables
+load_incremental(conn, df, city)  → INCREMENTAL append of new rows only
+get_latest_date(conn, city)       → last date stored for a city
+row_counts(conn)                  → summary dict per table
 """
 
 from __future__ import annotations
 
 import logging
-import os
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Optional
 
 import pandas as pd
-
-BASE_DIR = Path(__file__).resolve().parent.parent
 
 try:
     import duckdb
@@ -33,45 +30,63 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Column schema for raw tables
+# Column schema for raw_historical
 # ─────────────────────────────────────────────────────────────────────────────
-RAW_COLUMNS_DDL = """
-    city                         VARCHAR,
-    time                         DATE,
-    temperature_2m_max          DOUBLE,
-    temperature_2m_min          DOUBLE,
-    temperature_2m_mean         DOUBLE,
-    precipitation_sum           DOUBLE,
-    rain_sum                    DOUBLE,
-    snowfall_sum                DOUBLE,
-    wind_speed_10m_max          DOUBLE,
-    wind_gusts_10m_max          DOUBLE,
-    relative_humidity_2m_mean   DOUBLE,
-    pressure_msl_mean           DOUBLE,
-    cloud_cover_mean            DOUBLE,
-    shortwave_radiation_sum     DOUBLE,
-    apparent_temperature_max    DOUBLE,
-    weather_code                INTEGER,
-    latitude                    DOUBLE,
-    longitude                   DOUBLE
+RAW_HISTORICAL_DDL = """
+CREATE TABLE IF NOT EXISTS raw_historical (
+    city                      VARCHAR,
+    time                      DATE,
+    temperature_2m_max        DOUBLE,
+    temperature_2m_min        DOUBLE,
+    temperature_2m_mean       DOUBLE,
+    precipitation_sum         DOUBLE,
+    rain_sum                  DOUBLE,
+    snowfall_sum              DOUBLE,
+    wind_speed_10m_max        DOUBLE,
+    wind_gusts_10m_max        DOUBLE,
+    relative_humidity_2m_mean DOUBLE,
+    pressure_msl_mean         DOUBLE,
+    cloud_cover_mean          DOUBLE,
+    shortwave_radiation_sum   DOUBLE,
+    apparent_temperature_max  DOUBLE,
+    weather_code              INTEGER,
+    PRIMARY KEY (city, time)
+)
+"""
+
+RAW_FORECAST_DDL = """
+CREATE TABLE IF NOT EXISTS raw_forecast (
+    city                      VARCHAR,
+    time                      DATE,
+    temperature_2m_max        DOUBLE,
+    temperature_2m_min        DOUBLE,
+    temperature_2m_mean       DOUBLE,
+    precipitation_sum         DOUBLE,
+    rain_sum                  DOUBLE,
+    snowfall_sum              DOUBLE,
+    wind_speed_10m_max        DOUBLE,
+    wind_gusts_10m_max        DOUBLE,
+    relative_humidity_2m_mean DOUBLE,
+    pressure_msl_mean         DOUBLE,
+    cloud_cover_mean          DOUBLE,
+    shortwave_radiation_sum   DOUBLE,
+    apparent_temperature_max  DOUBLE,
+    weather_code              INTEGER,
+    PRIMARY KEY (city, time)
+)
 """
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Connection
 # ─────────────────────────────────────────────────────────────────────────────
 
-def get_connection(db_path: str | Path = None) -> "duckdb.DuckDBPyConnection":
+def get_connection(db_path: str | Path = "data/weather.duckdb") -> "duckdb.DuckDBPyConnection":
     """
-    Əgər db_path verilməyibsə, avtomatik olaraq layihənin ana qovluğundakı
-    data/weather.duckdb faylına qoşulur.
+    Return a DuckDB connection, creating the database file (and parent dirs)
+    if they do not yet exist.
     """
-    if db_path is None:
-        db_path = BASE_DIR / "data" / "weather.duckdb"
-    
     path = Path(db_path)
-    # Lazımi qovluqları (data/) yaradır
     path.parent.mkdir(parents=True, exist_ok=True)
-    
     conn = duckdb.connect(str(path))
     logger.info(f"Connected to DuckDB: {path.resolve()}")
     return conn
@@ -93,42 +108,111 @@ def create_schemas(conn: "duckdb.DuckDBPyConnection") -> None:
 
 def create_raw_tables(conn: "duckdb.DuckDBPyConnection") -> None:
     """
-    Create raw tables without schema (compatible with pipeline.py)
+    Create raw_historical and raw_forecast tables inside RAW schema.
     """
-    conn.execute(f"CREATE TABLE IF NOT EXISTS raw_historical ({RAW_COLUMNS_DDL})")
-    conn.execute(f"CREATE TABLE IF NOT EXISTS raw_forecast ({RAW_COLUMNS_DDL})")
-    logger.info("Raw tables ensured (without schema).")
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS raw.raw_historical (
+            city                      VARCHAR,
+            time                      DATE,
+            temperature_2m_max        DOUBLE,
+            temperature_2m_min        DOUBLE,
+            temperature_2m_mean       DOUBLE,
+            precipitation_sum         DOUBLE,
+            rain_sum                  DOUBLE,
+            snowfall_sum              DOUBLE,
+            wind_speed_10m_max        DOUBLE,
+            wind_gusts_10m_max        DOUBLE,
+            relative_humidity_2m_mean DOUBLE,
+            pressure_msl_mean         DOUBLE,
+            cloud_cover_mean          DOUBLE,
+            shortwave_radiation_sum   DOUBLE,
+            apparent_temperature_max  DOUBLE,
+            weather_code              INTEGER
+        )
+    """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS raw.raw_forecast (
+            city                      VARCHAR,
+            time                      DATE,
+            temperature_2m_max        DOUBLE,
+            temperature_2m_min        DOUBLE,
+            temperature_2m_mean       DOUBLE,
+            precipitation_sum         DOUBLE,
+            rain_sum                  DOUBLE,
+            snowfall_sum              DOUBLE,
+            wind_speed_10m_max        DOUBLE,
+            wind_gusts_10m_max        DOUBLE,
+            relative_humidity_2m_mean DOUBLE,
+            pressure_msl_mean         DOUBLE,
+            cloud_cover_mean          DOUBLE,
+            shortwave_radiation_sum   DOUBLE,
+            apparent_temperature_max  DOUBLE,
+            weather_code              INTEGER
+        )
+    """)
+
+    logger.info("Raw tables ensured in schema: raw")
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Full load (Day 3 original)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def load_raw_data(conn, data_dir=None) -> dict:
-    if data_dir is None:
-        data_dir = BASE_DIR / "data" / "raw"
-    
-    data_dir = Path(data_dir)
-    # Drop and recreate tables
-    conn.execute("DROP TABLE IF EXISTS raw_historical")
-    conn.execute("DROP TABLE IF EXISTS raw_forecast")
-    create_raw_tables(conn)
-    
-    summary = {}
-    files = {
-        "raw_historical": data_dir / "all_94_cities_historical_combined.csv",
-        "raw_forecast": data_dir / "all_94_cities_forecast_combined.csv"
-    }
+def load_raw_data(
+    conn: "duckdb.DuckDBPyConnection",
+    data_dir: str | Path = "data",
+) -> dict:
+    """
+    FULL load: read CSV/Parquet files from data_dir and insert into raw tables.
+    Existing data is replaced (DROP + recreate + INSERT).
 
-    for table, path in files.items():
-        if path.exists():
-            logger.info(f" Loading {path.name} → {table}")
-            conn.execute(f"INSERT INTO {table} SELECT * FROM read_csv_auto('{path}')")
-            n = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
-            summary[table] = n
-        else:
-            logger.warning(f" File not found: {path}")
-            summary[table] = 0
+    Looks for (in order):
+        historical → raw.parquet > raw_historical.parquet > all_*historical*.csv
+        forecast   → forecast.parquet > raw_forecast.parquet > all_*forecast*.csv
+
+    Returns a summary dict with row counts.
+    """
+    data_dir = Path(data_dir)
+    create_raw_tables(conn)
+    summary = {}
+
+    def _load_one(table: str, candidates: list[Path]) -> int:
+        for p in candidates:
+            if p.exists():
+                logger.info(f"  Loading {p.name} → {table}")
+                conn.execute(f"DELETE FROM {table}")
+                if p.suffix == ".parquet":
+                    conn.execute(
+                        f"INSERT INTO {table} SELECT * FROM read_parquet('{p}')"
+                    )
+                else:
+                    conn.execute(
+                        f"INSERT INTO {table} SELECT * FROM read_csv_auto('{p}')"
+                    )
+                n = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+                logger.info(f"  {table}: {n:,} rows loaded.")
+                return n
+        logger.warning(f"  No source file found for {table}. Looked in: {[str(c) for c in candidates]}")
+        return 0
+
+    hist_candidates = [
+        data_dir / "raw.parquet",
+        data_dir / "raw_historical.parquet",
+        *sorted(data_dir.glob("*historical*.csv")),
+        *sorted(data_dir.glob("all_*historical*.csv")),
+    ]
+    fc_candidates = [
+        data_dir / "forecast.parquet",
+        data_dir / "raw_forecast.parquet",
+        *sorted(data_dir.glob("*forecast*.csv")),
+    ]
+
+    summary["raw_historical"] = _load_one("raw.raw_historical", hist_candidates)
+    summary["raw_forecast"]   = _load_one("raw.raw_forecast",   fc_candidates)
     return summary
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Incremental loading (Day 5 addition)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -136,7 +220,7 @@ def load_raw_data(conn, data_dir=None) -> dict:
 def get_latest_date(
     conn: "duckdb.DuckDBPyConnection",
     city: str,
-    table: str = "raw_historical",
+    table: str = "raw.raw_historical",
 ) -> Optional[date]:
     """
     Return the most recent date stored for *city* in *table*.
@@ -155,7 +239,7 @@ def get_latest_date(
 def load_incremental(
     conn:  "duckdb.DuckDBPyConnection",
     df:    pd.DataFrame,
-    table: str = "raw_historical",
+    table: str = "raw.raw_historical",
 ) -> int:
     """
     Append only the rows in *df* that are NOT already in *table*.
@@ -212,9 +296,9 @@ def row_counts(conn: "duckdb.DuckDBPyConnection") -> dict:
     Return a summary dict: table_name → row_count for all pipeline tables.
     """
     tables = [
-        "raw.raw_historical", "raw.raw_forecast",
-        "staging.staging_historical", "staging.staging_forecast",
-        "analytics.analytics_historical", "analytics.analytics_forecast",
+    "raw.raw_historical", "raw.raw_forecast",
+    "staging.staging_historical", "staging.staging_forecast",
+    "analytics.analytics_historical", "analytics.analytics_forecast",
     ]
     counts = {}
     for t in tables:
