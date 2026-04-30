@@ -93,11 +93,11 @@ def create_schemas(conn: "duckdb.DuckDBPyConnection") -> None:
 
 def create_raw_tables(conn: "duckdb.DuckDBPyConnection") -> None:
     """
-    Cədvəlləri 'raw' sxeminin daxilində yaradırıq.
+    Create raw tables inside the 'raw' schema.
     """
     conn.execute(f"CREATE TABLE IF NOT EXISTS raw.raw_historical ({RAW_COLUMNS_DDL})")
     conn.execute(f"CREATE TABLE IF NOT EXISTS raw.raw_forecast ({RAW_COLUMNS_DDL})")
-    logger.info("Raw tables ensured inside 'raw' schema.")
+    logger.info("Raw tables ensured (without schema).")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Full load (Day 3 original)
@@ -108,7 +108,7 @@ def load_raw_data(conn, data_dir=None) -> dict:
         data_dir = BASE_DIR / "data" / "raw"
     
     data_dir = Path(data_dir)
-    # Sxem daxilindəki cədvəlləri silirik
+    # Drop and recreate tables
     conn.execute("DROP TABLE IF EXISTS raw.raw_historical")
     conn.execute("DROP TABLE IF EXISTS raw.raw_forecast")
     create_raw_tables(conn)
@@ -136,7 +136,7 @@ def load_raw_data(conn, data_dir=None) -> dict:
 def get_latest_date(
     conn: "duckdb.DuckDBPyConnection",
     city: str,
-    table: str = "raw_historical",
+    table: str = "raw.raw_historical",
 ) -> Optional[date]:
     """
     Return the most recent date stored for *city* in *table*.
@@ -155,7 +155,7 @@ def get_latest_date(
 def load_incremental(
     conn:  "duckdb.DuckDBPyConnection",
     df:    pd.DataFrame,
-    table: str = "raw_historical",
+    table: str = "raw.raw_historical",
 ) -> int:
     """
     Append only the rows in *df* that are NOT already in *table*.
