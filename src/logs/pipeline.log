@@ -1,0 +1,32 @@
+2026-04-28 19:44:40 [INFO    ] pipeline — ======================================================================
+2026-04-28 19:44:40 [INFO    ] pipeline — Heat-Pulse Pipeline  |  run_id=20260428_194440  |  mode=INCREMENTAL
+2026-04-28 19:44:40 [INFO    ] pipeline — ======================================================================
+2026-04-28 19:44:40 [INFO    ] pipeline — 
+── Stage 1: INGEST ─────────────────────────────────────────
+2026-04-28 19:44:41 [INFO    ] pipeline — Using project ingestion.py for fetching.
+2026-04-28 19:44:41 [INFO    ] pipeline —   Fetching Baku [2020-01-01 → 2026-04-28]
+2026-04-28 19:44:44 [INFO    ] pipeline —     → 2,310 rows fetched.
+2026-04-28 19:44:44 [ERROR   ] pipeline —   Baku: FAILED — 'time'
+2026-04-28 19:44:44 [INFO    ] pipeline —   Fetching Ganja [2020-01-01 → 2026-04-28]
+2026-04-28 19:44:46 [INFO    ] pipeline —     → 2,310 rows fetched.
+2026-04-28 19:44:46 [ERROR   ] pipeline —   Ganja: FAILED — 'time'
+2026-04-28 19:44:46 [INFO    ] pipeline —   Fetching Sumgayit [2020-01-01 → 2026-04-28]
+2026-04-28 19:44:47 [INFO    ] pipeline —     → 2,310 rows fetched.
+2026-04-28 19:44:47 [ERROR   ] pipeline —   Sumgayit: FAILED — 'time'
+2026-04-28 19:44:47 [INFO    ] pipeline —   Fetching Mingachevir [2020-01-01 → 2026-04-28]
+2026-04-28 19:54:49 [INFO    ] pipeline —     → 2,310 rows fetched.
+2026-04-28 19:54:49 [ERROR   ] pipeline —   Mingachevir: FAILED — 'time'
+2026-04-28 19:54:49 [INFO    ] pipeline —   Fetching Lankaran [2020-01-01 → 2026-04-28]
+2026-04-28 19:54:53 [INFO    ] pipeline —     → 2,310 rows fetched.
+2026-04-28 19:54:53 [ERROR   ] pipeline —   Lankaran: FAILED — 'time'
+2026-04-28 19:54:53 [INFO    ] pipeline —   Rows ingested: 0
+2026-04-28 19:54:53 [ERROR   ] quality_checks — [row_count] FAIL — Zero rows loaded — aborting pipeline.
+2026-04-28 19:54:53 [ERROR   ] pipeline — Pipeline aborted: unsupported operand type(s) for -: 'datetime.date' and 'NaTType'
+2026-04-28 19:54:53 [INFO    ] pipeline — 
+======================================================================
+2026-04-28 19:54:53 [INFO    ] pipeline — Pipeline ABORTED in 613.1s
+2026-04-28 19:54:53 [INFO    ] pipeline —   Ingested:  0 rows
+2026-04-28 19:54:53 [INFO    ] pipeline —   Staging:   0 rows
+2026-04-28 19:54:53 [INFO    ] pipeline —   Analytics: 0 rows
+2026-04-28 19:54:53 [ERROR   ] pipeline —   Errors: ["Baku: 'time'", "Ganja: 'time'", "Sumgayit: 'time'", "Mingachevir: 'time'", "Lankaran: 'time'", "unsupported operand type(s) for -: 'datetime.date' and 'NaTType'"]
+2026-04-28 19:54:53 [INFO    ] pipeline — ======================================================================

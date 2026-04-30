@@ -1,0 +1,8 @@
+Model,RMSE,MAE,R²,CI Width (avg),Notes
+Baseline — Persistence,2.2253,1.5143,0.9511,—,Tomorrow = Today (naive)
+Baseline — Seasonal Naive,4.483,3.4836,0.8015,—,"Hist. mean for (city, doy)"
+Linear Regression,2.2461,1.664,0.9502,8.7383,Interpretable; sklearn
+OLS (statsmodels),2.2461,1.664,0.9502,0.0647,p-values; model-based CI
+Ridge Regression (α=100.0),2.2456,1.6637,0.9502,8.7384,L2 regularisation; CV-tuned α
+Lasso Regression (α=0.001),2.2436,1.6619,0.9503,8.7391,L1 sparse; 1 coefs zeroed
+XGBoost Regressor,2.2201,1.6474,0.9513,8.256,Non-linear; best performance
