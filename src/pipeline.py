@@ -209,8 +209,9 @@ def get_connection(db_path: Path) -> "duckdb.DuckDBPyConnection":
 
 
 def ensure_raw_table(conn) -> None:
+    conn.execute("CREATE SCHEMA IF NOT EXISTS raw")
     conn.execute("""
-        CREATE TABLE IF NOT EXISTS raw_historical (
+        CREATE TABLE IF NOT EXISTS raw.raw_historical (
             city                      VARCHAR,
             time                      DATE,
             temperature_2m_max        DOUBLE,
@@ -232,44 +233,72 @@ def ensure_raw_table(conn) -> None:
 
 
 def get_latest_date_per_city(conn) -> dict[str, date]:
-    """Return a dict: city_name (lower) → latest date in raw_historical."""
+    """Return a dict: city_name (lower) → latest date in raw.raw_historical."""
     try:
         rows = conn.execute(
-            "SELECT city, MAX(time) AS latest FROM raw_historical GROUP BY city"
+            "SELECT city, MAX(time) AS latest FROM raw.raw_historical GROUP BY city"
         ).fetchall()
         return {row[0].lower(): row[1] for row in rows}
     except Exception:
         return {}
 
+def should_run_weekly_update(conn, city_name: str, force_update: bool = False) -> bool:
+    """
+    Check if weekly update should run for a city.
+    Returns True if:
+    - No data exists for the city, OR
+    - Force update is requested, OR  
+    - Latest data is more than 7 days old
+    """
+    if force_update:
+        return True
+        
+    latest_dates = get_latest_date_per_city(conn)
+    latest_date = latest_dates.get(city_name.lower())
+    
+    if latest_date is None:
+        logger.info(f"  {city_name}: No existing data found - will fetch from 2020-01-01")
+        return True
+    
+    today = date.today()
+    days_since_update = (today - latest_date).days
+    
+    if days_since_update >= 7:
+        logger.info(f"  {city_name}: Data is {days_since_update} days old - weekly update needed")
+        return True
+    else:
+        logger.info(f"  {city_name}: Data is only {days_since_update} days old - skipping weekly update")
+        return False
+
 
 def append_to_raw(conn, df: pd.DataFrame) -> int:
-    """Append a DataFrame to raw_historical. Returns the number of rows inserted."""
+    """Append a DataFrame to raw.raw_historical. Returns the number of rows inserted."""
     if df.empty:
         return 0
     conn.register("_tmp_new", df)
-    conn.execute("INSERT INTO raw_historical SELECT * FROM _tmp_new")
+    conn.execute("INSERT INTO raw.raw_historical SELECT * FROM _tmp_new")
     conn.unregister("_tmp_new")
     return len(df)
 
 
 def load_raw_as_df(conn) -> pd.DataFrame:
-    """Return the entire raw_historical table as a DataFrame."""
+    """Return the entire raw.raw_historical table as a DataFrame."""
     try:
-        return conn.execute("SELECT * FROM raw_historical").df()
+        return conn.execute("SELECT * FROM raw.raw_historical").df()
     except Exception:
         return pd.DataFrame()
 
 
 def load_staging_as_df(conn) -> pd.DataFrame:
     try:
-        return conn.execute("SELECT * FROM staging_historical").df()
+        return conn.execute("SELECT * FROM staging.staging_historical").df()
     except Exception:
         return pd.DataFrame()
 
 
 def load_analytics_as_df(conn) -> pd.DataFrame:
     try:
-        return conn.execute("SELECT * FROM analytics_historical").df()
+        return conn.execute("SELECT * FROM analytics.analytics_historical").df()
     except Exception:
         return pd.DataFrame()
 
@@ -286,11 +315,12 @@ def stage_ingest(
     variables: list[str],
     mode: str,
     data_dir: Path,
+    force_update: bool = False,
 ) -> dict:
     """
     Ingest stage.
-    - full:        recreate raw_historical and fetch all data
-    - incremental: fetch only dates after the latest already in DB
+    - full:        recreate raw.raw_historical and fetch all data
+    - incremental: weekly update only (fetch from latest date + 1 day, but only if 7+ days old)
     """
     fetch_fn = _try_import_ingestion()
     if fetch_fn:
@@ -299,8 +329,8 @@ def stage_ingest(
         logger.info("ingestion.py not found — using built-in Open-Meteo fetcher.")
 
     if mode == "full":
-        logger.info("FULL mode: dropping and recreating raw_historical.")
-        conn.execute("DROP TABLE IF EXISTS raw_historical")
+        logger.info("FULL mode: dropping and recreating raw.raw_historical.")
+        conn.execute("DROP TABLE IF EXISTS raw.raw_historical")
 
     ensure_raw_table(conn)
 
@@ -313,6 +343,11 @@ def stage_ingest(
         name_lower = city["name"].lower()
 
         if mode == "incremental":
+            # Check if weekly update should run
+            if not should_run_weekly_update(conn, city["name"], force_update):
+                summary["cities_skipped"] += 1
+                continue
+                
             latest = latest_per_city.get(name_lower)
             if latest:
                 # Fetch from day after the latest stored date
@@ -322,6 +357,7 @@ def stage_ingest(
                     summary["cities_skipped"] += 1
                     continue
             else:
+                # No existing data, start from default start date
                 new_start = start_date
         else:
             new_start = start_date
@@ -400,19 +436,21 @@ def run_pipeline(
     cities: Optional[list[str]] = None,
     start_date: str = DEFAULT_START,
     end_date: str   = DEFAULT_END,
+    force_update: bool = False,
 ) -> dict:
     """
     Execute the full pipeline.
 
     Parameters
     ----------
-    mode       : "full" or "incremental"
-    db_path    : path to the DuckDB file
-    data_dir   : path to the data directory
-    log_dir    : where to write pipeline.log
-    cities     : optional list of city names to process (None = all)
-    start_date : ISO date string for historical start
-    end_date   : ISO date string for historical end
+    mode         : "full" or "incremental"
+    db_path      : path to the DuckDB file
+    data_dir     : path to the data directory
+    log_dir      : where to write pipeline.log
+    cities       : optional list of city names to process (None = all)
+    start_date   : ISO date string for historical start
+    end_date     : ISO date string for historical end
+    force_update : force weekly update regardless of 7-day rule
 
     Returns
     -------
@@ -450,7 +488,7 @@ def run_pipeline(
         logger.info("\n── Stage 1: INGEST ─────────────────────────────────────────")
         ingest_summary = stage_ingest(
             conn, selected_cities, start_date, end_date,
-            WEATHER_VARIABLES, mode, data_dir
+            WEATHER_VARIABLES, mode, data_dir, force_update
         )
         summary["rows_ingested"]    = ingest_summary["rows_ingested"]
         summary["cities_skipped"]   = ingest_summary.get("cities_skipped", 0)
@@ -528,11 +566,12 @@ Examples:
   python src/pipeline.py --mode full
   python src/pipeline.py --mode incremental
   python src/pipeline.py --mode incremental --cities Baku Ganja
+  python src/pipeline.py --mode incremental --force-update
         """,
     )
     parser.add_argument(
         "--mode", choices=["full", "incremental"], default="incremental",
-        help="full = re-ingest everything; incremental = only new rows (default: incremental)",
+        help="full = re-ingest everything; incremental = weekly update only (default: incremental)",
     )
     parser.add_argument("--db-path",  default=str(DEFAULT_DB_PATH),  help="Path to weather.duckdb")
     parser.add_argument("--data-dir", default=str(DEFAULT_DATA_DIR), help="Path to data/ folder")
@@ -540,18 +579,20 @@ Examples:
     parser.add_argument("--cities",   nargs="*", default=None,        help="Specific city names to process")
     parser.add_argument("--start",    default=DEFAULT_START,          help=f"Start date (default: {DEFAULT_START})")
     parser.add_argument("--end",      default=DEFAULT_END,            help=f"End date (default: today)")
+    parser.add_argument("--force-update", action="store_true",       help="Force weekly update regardless of 7-day rule")
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
     summary = run_pipeline(
-        mode       = args.mode,
-        db_path    = Path(args.db_path),
-        data_dir   = Path(args.data_dir),
-        log_dir    = Path(args.log_dir),
-        cities     = args.cities,
-        start_date = args.start,
-        end_date   = args.end,
+        mode         = args.mode,
+        db_path      = Path(args.db_path),
+        data_dir     = Path(args.data_dir),
+        log_dir      = Path(args.log_dir),
+        cities       = args.cities,
+        start_date   = args.start,
+        end_date     = args.end,
+        force_update = args.force_update,
     )
     sys.exit(0 if summary["status"] != "ABORTED" else 1)
