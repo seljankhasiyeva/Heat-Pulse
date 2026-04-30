@@ -1,6 +1,10 @@
+<<<<<<< HEAD
+
+=======
 # Data
 data/*.duckdb
 data/*.duckdb.wal
+>>>>>>> main
 
 # Python
 __pycache__/
