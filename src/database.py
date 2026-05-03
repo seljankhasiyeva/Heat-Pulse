@@ -40,72 +40,69 @@ def get_connection(db_path=DB_PATH) -> duckdb.DuckDBPyConnection:
 # Sxem yaratma
 # ─────────────────────────────────────────────────────────────────────────────
 
-def create_schema(conn: duckdb.DuckDBPyConnection) -> None:
-    """
-    raw_historical, raw_forecast və pipeline_runs cədvəllərini yaradır.
-    staging_* və analytics_* cədvəlləri cleaning.py / features.py tərəfindən
-    CREATE OR REPLACE ilə yaradılır.
-    """
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS raw_historical (
-            time                       VARCHAR,
-            city                       VARCHAR,
-            latitude                   DOUBLE,
-            longitude                  DOUBLE,
-            temperature_2m_max         DOUBLE,
-            temperature_2m_min         DOUBLE,
-            temperature_2m_mean        DOUBLE,
-            precipitation_sum          DOUBLE,
-            rain_sum                   DOUBLE,
-            snowfall_sum               DOUBLE,
-            wind_speed_10m_max         DOUBLE,
-            wind_gusts_10m_max         DOUBLE,
-            pressure_msl_mean          DOUBLE,
-            shortwave_radiation_sum    DOUBLE,
-            apparent_temperature_max   DOUBLE,
-            weather_code               DOUBLE,
-            PRIMARY KEY (time, city)
-        )
-    """)
+def create_schema(conn):
+    conn.execute("CREATE SCHEMA IF NOT EXISTS raw")
+    conn.execute("CREATE SCHEMA IF NOT EXISTS staging")
+    conn.execute("CREATE SCHEMA IF NOT EXISTS analytics")
 
     conn.execute("""
-        CREATE TABLE IF NOT EXISTS raw_forecast (
-            time                       VARCHAR,
-            city                       VARCHAR,
-            latitude                   DOUBLE,
-            longitude                  DOUBLE,
-            temperature_2m_max         DOUBLE,
-            temperature_2m_min         DOUBLE,
-            temperature_2m_mean        DOUBLE,
-            precipitation_sum          DOUBLE,
-            rain_sum                   DOUBLE,
-            snowfall_sum               DOUBLE,
-            wind_speed_10m_max         DOUBLE,
-            wind_gusts_10m_max         DOUBLE,
-            pressure_msl_mean          DOUBLE,
-            shortwave_radiation_sum    DOUBLE,
-            apparent_temperature_max   DOUBLE,
-            weather_code               DOUBLE,
-            PRIMARY KEY (time, city)
-        )
-    """)
+    CREATE TABLE IF NOT EXISTS raw.raw_historical (
+        city                    VARCHAR,
+        time                    DATE,
+        latitude                DOUBLE,
+        longitude               DOUBLE,
+        temperature_2m_max      DOUBLE,
+        temperature_2m_min      DOUBLE,
+        temperature_2m_mean     DOUBLE,
+        precipitation_sum       DOUBLE,
+        rain_sum                DOUBLE,
+        snowfall_sum            DOUBLE,
+        wind_speed_10m_max      DOUBLE,
+        wind_gusts_10m_max      DOUBLE,
+        pressure_msl_mean       DOUBLE,
+        shortwave_radiation_sum DOUBLE,
+        apparent_temperature_max DOUBLE,
+        weather_code            DOUBLE,
+        PRIMARY KEY (city, time)
+    )
+""")
 
     conn.execute("""
-        CREATE TABLE IF NOT EXISTS pipeline_runs (
-            run_id          INTEGER PRIMARY KEY,
-            run_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            mode            VARCHAR,
-            cities_count    INTEGER,
-            rows_raw        INTEGER,
-            rows_staging    INTEGER,
-            rows_analytics  INTEGER,
-            duration_sec    DOUBLE,
-            status          VARCHAR,
-            notes           VARCHAR
+    CREATE TABLE IF NOT EXISTS raw.raw_forecast (
+        city                    VARCHAR,
+        time                    DATE,
+        latitude                DOUBLE,
+        longitude               DOUBLE,
+        temperature_2m_max      DOUBLE,
+        temperature_2m_min      DOUBLE,
+        temperature_2m_mean     DOUBLE,
+        precipitation_sum       DOUBLE,
+        rain_sum                DOUBLE,
+        snowfall_sum            DOUBLE,
+        wind_speed_10m_max      DOUBLE,
+        wind_gusts_10m_max      DOUBLE,
+        pressure_msl_mean       DOUBLE,
+        shortwave_radiation_sum DOUBLE,
+        apparent_temperature_max DOUBLE,
+        weather_code            DOUBLE,
+        PRIMARY KEY (city, time)
+    )
+""")
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS raw.pipeline_runs (
+            run_id           INTEGER PRIMARY KEY,
+            run_at       TIMESTAMP DEFAULT current_timestamp,
+            mode         VARCHAR,
+            cities_count INTEGER,
+            rows_raw     INTEGER,
+            rows_staging INTEGER,
+            rows_analytics INTEGER,
+            duration_sec DOUBLE,
+            status       VARCHAR,
+            notes        VARCHAR
         )
     """)
-
-    logger.info("Sxem yoxlandı / yaradıldı.")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -156,20 +153,21 @@ def load_raw_historical(
     df = _normalise_raw(df)
 
     if mode == "replace":
-        conn.execute("DELETE FROM raw_historical")
+        conn.execute("DELETE FROM raw.raw_historical")
         logger.info("raw_historical tam yenilənmə üçün təmizləndi.")
 
     conn.register("_rh", df)
     conn.execute("""
-        INSERT OR REPLACE INTO raw_historical
+        INSERT INTO raw.raw_historical
         SELECT
-            time, city, latitude, longitude,
+            city, time, latitude, longitude,
             temperature_2m_max, temperature_2m_min, temperature_2m_mean,
             precipitation_sum, rain_sum, snowfall_sum,
             wind_speed_10m_max, wind_gusts_10m_max,
             pressure_msl_mean, shortwave_radiation_sum,
             apparent_temperature_max, weather_code
         FROM _rh
+        ON CONFLICT (city, time) DO NOTHING
     """)
     conn.unregister("_rh")
     logger.info(f"raw_historical-a {len(df):,} sətir yükləndi.")
@@ -184,12 +182,12 @@ def load_raw_forecast(
     if df is None or df.empty:
         return 0
     df = _normalise_raw(df)
-    conn.execute("DELETE FROM raw_forecast")
+    conn.execute("DELETE FROM raw.raw_forecast")
     conn.register("_rf", df)
     conn.execute("""
-        INSERT INTO raw_forecast
+        INSERT INTO raw.raw_forecast
         SELECT
-            time, city, latitude, longitude,
+            city, time, latitude, longitude,
             temperature_2m_max, temperature_2m_min, temperature_2m_mean,
             precipitation_sum, rain_sum, snowfall_sum,
             wind_speed_10m_max, wind_gusts_10m_max,
@@ -219,9 +217,9 @@ def save_raw_as_parquet(
     data_dir.mkdir(parents=True, exist_ok=True)
 
     exports = [
-        ("raw_historical", "raw.parquet"),
-        ("raw_historical", "raw_historical.parquet"),
-        ("raw_forecast",   "raw_forecast.parquet"),
+        ("raw.raw_historical", "raw.parquet"),
+        ("raw.raw_historical", "raw_historical.parquet"),
+        ("raw.raw_forecast",   "raw_forecast.parquet"),
     ]
     for table, fname in exports:
         try:
@@ -244,7 +242,7 @@ def get_latest_dates(conn: duckdb.DuckDBPyConnection) -> dict:
     """
     try:
         rows = conn.execute(
-            "SELECT city, MAX(time) AS max_time FROM raw_historical GROUP BY city"
+            "SELECT city, MAX(time) AS max_time FROM raw.raw_historical GROUP BY city"
         ).fetchall()
         result = {row[0]: row[1] for row in rows}
         logger.info(f"{len(result)} şəhər üçün son tarix alındı.")
@@ -289,10 +287,10 @@ def log_pipeline_run(
     """Pipeline icrasının qeydini pipeline_runs cədvəlinə yazır."""
     try:
         next_id = conn.execute(
-            "SELECT COALESCE(MAX(run_id), 0) + 1 FROM pipeline_runs"
+            "SELECT COALESCE(MAX(run_id), 0) + 1 FROM raw.pipeline_runs"
         ).fetchone()[0]
         conn.execute("""
-            INSERT INTO pipeline_runs
+            INSERT INTO raw.pipeline_runs
                 (run_id, mode, cities_count, rows_raw, rows_staging,
                  rows_analytics, duration_sec, status, notes)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -313,10 +311,10 @@ def log_pipeline_run(
 def get_table_summary(conn: duckdb.DuckDBPyConnection) -> pd.DataFrame:
     """Bütün pipeline cədvəllərinin sətir sayını qaytarır."""
     tables = [
-        "raw_historical", "raw_forecast",
-        "staging_historical", "staging_forecast",
-        "analytics_historical", "analytics_forecast",
-        "pipeline_runs",
+        "raw.raw_historical", "raw.raw_forecast",
+        "staging.staging_historical", "staging.staging_forecast",
+        "analytics.analytics_historical", "analytics.analytics_forecast",
+        "raw.pipeline_runs",
     ]
     return pd.DataFrame([
         {"table": t, "row_count": get_row_count(conn, t)}
@@ -337,3 +335,65 @@ def print_row_counts(conn: duckdb.DuckDBPyConnection) -> None:
         bar = "█" * min(int(row["row_count"] / 5000), 30)
         print(f"  {row['table']:<25} {row['row_count']:>10,}  {bar}")
     print("=" * 45 + "\n")
+
+# database.py-ın sonuna əlavə et
+def load_raw_data(conn, data_dir=DATA_DIR) -> dict:
+    """Alias — Day 3 tələbi üçün load_raw_historical-ı çağırır."""
+    data_dir = Path(data_dir)
+    summary  = {}
+
+    for fname in ["raw_historical.parquet", "raw.parquet"]:
+        fpath = data_dir / fname
+        if fpath.exists():
+            df = pd.read_parquet(fpath)
+            n = load_raw_historical(conn, df, mode="append")
+            summary["raw.raw_historical"] = n
+            break
+
+    if not summary:
+        summary["raw.raw_historical"] = 0
+    return summary
+
+# Sadə alias
+create_schemas    = create_schema
+create_raw_tables = create_schema
+row_counts        = get_table_summary
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Bu funksiyanı database.py-ın SONUNA əlavə et
+# ─────────────────────────────────────────────────────────────────────────────
+
+def load_checkpoints_to_db(
+    conn: duckdb.DuckDBPyConnection,
+    data_dir=DATA_DIR,
+) -> int:
+    """
+    data/raw/checkpoint_*.parquet fayllarını raw_historical-a yüklə,
+    sonra həmin faylları sil.
+
+    Növbəti run başlayanda əvvəlki yarımçıq run-dan qalan
+    checkpoint-lər avtomatik DB-yə köçürülür.
+
+    Qaytarır: neçə checkpoint işləndi.
+    """
+    data_dir   = Path(data_dir)
+    checkpoints = sorted(data_dir.glob("checkpoint_*.parquet"))
+
+    if not checkpoints:
+        logger.info("Checkpoint tapılmadı.")
+        return 0
+
+    logger.info(f"{len(checkpoints)} checkpoint tapıldı — DB-yə yüklənir...")
+    loaded = 0
+    for ckpt in checkpoints:
+        try:
+            df = pd.read_parquet(ckpt)
+            n  = load_raw_historical(conn, df, mode="append")
+            ckpt.unlink()   # uğurla yükləndi → sil
+            logger.info(f"Checkpoint yükləndi və silindi: {ckpt.name} ({n:,} sətir)")
+            loaded += 1
+        except Exception as e:
+            logger.warning(f"Checkpoint yüklənərkən xəta ({ckpt.name}): {e}")
+
+    logger.info(f"Checkpoint yükləməsi tamamlandı: {loaded}/{len(checkpoints)} fayl.")
+    return loaded

@@ -51,6 +51,13 @@ except ImportError:
 # Loglama quraşdırması
 # ─────────────────────────────────────────────────────────────────────────────
 
+# pipeline.py-ın əvvəlində, logger-dən əvvəl
+_SRC_DIR  = Path(__file__).parent          # .../src/
+_ROOT_DIR = _SRC_DIR.parent                # .../layihe/
+_DB_PATH  = _ROOT_DIR / "data" / "weather.duckdb"
+_DATA_DIR = _ROOT_DIR / "data"
+_LOG_DIR  = _ROOT_DIR / "logs"
+
 def setup_logging(
     level: int = logging.INFO,
     log_dir: str | Path = "logs",
@@ -73,7 +80,7 @@ def setup_logging(
         format=fmt,
         handlers=[
             logging.FileHandler(log_file, encoding="utf-8"),
-            logging.StreamHandler(sys.stdout),
+            logging.StreamHandler(open(sys.stdout.fileno(), mode='w', encoding='utf-8', buffering=1)),
         ],
     )
 
@@ -135,19 +142,44 @@ def _resolve_source(
 
         return ingest_mod.ingest_incremental(latest_dates=latest, cities=cities_dict)
 
+    # ─────────────────────────────────────────────────────────────────────────────
+# Bu bloku pipeline.py-da _resolve_source funksiyasının içində
+# köhnə `else:  # full` bloku ilə əvəz et
+# ─────────────────────────────────────────────────────────────────────────────
+
     else:  # full
         hist_csv = ingest_mod.HIST_CSV
-        if hist_csv.exists() and not force_update:
+        
+        # DB-də artıq olan şəhərləri al
+        existing_cities = set(db_mod.get_latest_dates(conn).keys())
+        if existing_cities:
+            logger.info(
+                f"DB-də artıq {len(existing_cities)} şəhər var — "
+                f"bunlar skip ediləcək."
+            )
+
+        if hist_csv.exists() and not force_update and not existing_cities:
+            # CSV var VƏ DB boşdursa — CSV-dən yüklə (sürətli)
             logger.info(f"CSV tapıldı: {hist_csv} — CSV-dən yüklənir.")
             df = ingest_mod.load_historical_from_csv(hist_csv)
-            # Filter cities if requested
             if cities:
                 df = df[df["city"].str.lower().isin([c.lower() for c in cities])]
             return df
         else:
             sd = start_date or ingest_mod.DEFAULT_START_DATE
-            logger.info(f"CSV tapılmadı — API-dan tam yüklənir (start={sd}).")
-            return ingest_mod.ingest_all_cities_full(cities=cities_dict, start_date=sd)
+            logger.info(
+                f"API-dan yüklənir (start={sd}). "
+                f"Skip: {len(existing_cities)} şəhər."
+            )
+            # Checkpoint-ləri əvvəlcə DB-yə yüklə (əvvəlki yarımçıq run-dan)
+            db_mod.load_checkpoints_to_db(conn, data_dir=ingest_mod.RAW_DIR)
+
+            return ingest_mod.ingest_all_cities_full(
+                cities=cities_dict,
+                start_date=sd,
+                skip_existing=True,
+                existing_cities=existing_cities,
+            )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -156,7 +188,7 @@ def _resolve_source(
 
 def _stage_load_raw(conn, raw_df: pd.DataFrame, mode: str, data_dir: Path) -> int:
     logger.info("=== MƏRHƏLƏ 2: XAM MƏLUMAT YÜKLƏNIR ===")
-    load_mode = "replace" if mode == "full" else "append"
+    load_mode = "append"
     n = db_mod.load_raw_historical(conn, raw_df, mode=load_mode)
     # cleaning.py parquet fayllarından oxuduğu üçün parqueti də yenilə
     db_mod.save_raw_as_parquet(conn, data_dir=data_dir)
@@ -173,8 +205,8 @@ def _stage_clean(conn, data_dir: str = "data") -> int:
     if HAS_CLEANING:
         try:
             clean_mod.clean_raw_to_staging(conn, data_dir=data_dir)
-            n = db_mod.get_row_count(conn, "staging_historical")
-            logger.info(f"staging_historical: {n:,} sətir")
+            n = db_mod.get_row_count(conn, "staging.staging_historical")
+            logger.info(f"staging.staging_historical: {n:,} sətir")
             return n
         except Exception as e:
             logger.error(f"cleaning.py xəta verdi: {e}")
@@ -186,7 +218,7 @@ def _stage_clean(conn, data_dir: str = "data") -> int:
 def _fallback_clean(conn) -> int:
     """cleaning.py olmadıqda sadə pandas əməliyyatları ilə təmizlə."""
     try:
-        raw_df = conn.execute("SELECT * FROM raw_historical").df()
+        raw_df = conn.execute("SELECT * FROM raw.raw_historical").df()
     except Exception as e:
         logger.error(f"raw_historical oxuna bilmədi: {e}")
         return 0
@@ -208,7 +240,7 @@ def _fallback_clean(conn) -> int:
         )
 
     conn.register("_staging_fb", raw_df)
-    conn.execute("CREATE OR REPLACE TABLE staging_historical AS SELECT * FROM _staging_fb")
+    conn.execute("CREATE OR REPLACE TABLE staging.staging_historical AS SELECT * FROM _staging_fb")
     conn.unregister("_staging_fb")
 
     n = len(raw_df)
@@ -226,8 +258,8 @@ def _stage_features(conn) -> int:
     if HAS_FEATURES:
         try:
             feat_mod.populate_analytics_tables(conn)
-            n = db_mod.get_row_count(conn, "analytics_historical")
-            logger.info(f"analytics_historical: {n:,} sətir")
+            n = db_mod.get_row_count(conn, "analytics.analytics_historical")
+            logger.info(f"analytics.analytics_historical: {n:,} sətir")
             return n
         except Exception as e:
             logger.error(f"features.py xəta verdi: {e}")
@@ -238,10 +270,10 @@ def _stage_features(conn) -> int:
 
 def _fallback_features(conn) -> int:
     """features.py olmadıqda bütün lazımi xüsusiyyətləri hesabla."""
-    if not db_mod.table_exists(conn, "staging_historical"):
+    if not db_mod.table_exists(conn, "staging.staging_historical"):
         return 0
     try:
-        df = conn.execute("SELECT * FROM staging_historical").df()
+        df = conn.execute("SELECT * FROM staging.staging_historical").df()
     except Exception as e:
         logger.error(f"staging_historical oxuna bilmədi: {e}")
         return 0
@@ -295,7 +327,7 @@ def _fallback_features(conn) -> int:
     })
 
     conn.register("_analytics_fb", df)
-    conn.execute("CREATE OR REPLACE TABLE analytics_historical AS SELECT * FROM _analytics_fb")
+    conn.execute("CREATE OR REPLACE TABLE analytics.analytics_historical AS SELECT * FROM _analytics_fb")
     conn.unregister("_analytics_fb")
 
     logger.info(f"Ehtiyat xüsusiyyətlər: {len(df):,} sətir → analytics_historical")
@@ -342,7 +374,7 @@ def _print_update_report(conn, raw_df: pd.DataFrame) -> None:
 
     try:
         db_dates = conn.execute(
-            "SELECT city, MAX(time) as son_tarix FROM raw_historical GROUP BY city"
+            "SELECT city, MAX(time) as son_tarix FROM raw.raw_historical GROUP BY city"
         ).df()
         print("  Bazadakı son tarixlər (ilk 10 şəhər):")
         today = date.today()
@@ -361,9 +393,9 @@ def _print_update_report(conn, raw_df: pd.DataFrame) -> None:
 
 def run_pipeline(
     mode: str = "incremental",
-    data_dir: str | Path = "data",
-    db_path: str | Path = "data/weather.duckdb",
-    log_dir: str | Path = "logs",
+    data_dir: str | Path = _DATA_DIR,
+    db_path: str | Path = _DB_PATH,
+    log_dir: str | Path = _LOG_DIR,
     start_date: str | None = None,
     cities: list[str] | None = None,
     force_update: bool = False,
@@ -427,7 +459,7 @@ def run_pipeline(
             qc.print_check_summary(checks_df)
             duration = time.time() - start_time
             db_mod.log_pipeline_run(
-                conn, mode=mode, cities_count=len(cities),
+                conn, mode=mode, cities_count=len(cities_dict),
                 rows_raw=rows_raw, rows_staging=0, rows_analytics=0,
                 duration_sec=duration, status="SUCCESS",
             )
@@ -450,9 +482,9 @@ def run_pipeline(
             checks_df = qc.run_all_checks(conn)
             qc.print_check_summary(checks_df)
             duration = time.time() - start_time
-            cities   = ingest_mod.load_cities_from_csv()
+            all_cities_tmp = ingest_mod.load_cities_from_csv()
             db_mod.log_pipeline_run(
-                conn, mode=mode, cities_count=len(cities),
+                conn, mode=mode, cities_count=len(all_cities_tmp),
                 rows_raw=0, rows_staging=0, rows_analytics=0,
                 duration_sec=duration, status="UP_TO_DATE",
                 notes="Yeni məlumat yoxdur.",
@@ -463,7 +495,7 @@ def run_pipeline(
                 "rows_raw": 0, "rows_staging": 0, "rows_analytics": 0,
                 "duration_sec": round(duration, 2),
                 "quality_checks": checks_df,
-                "cities_skipped": len(cities), "rows_ingested": 0,
+                "cities_skipped": len(all_cities_tmp), "rows_ingested": 0,
             }
 
         logger.info(f"Məlumat alındı: {len(raw_df):,} sətir")
@@ -473,7 +505,7 @@ def run_pipeline(
 
         # ── Keyfiyyət yoxlaması: sətir sayı ──────────────────────────────────
         # check_row_count(conn, "table_name") → _to_df() daxildə conn-dan oxuyur
-        rc = qc.check_row_count(conn, "raw_historical")
+        rc = qc.check_row_count(conn, "raw.raw_historical")
         if rc["status"] == "FAIL":
             raise RuntimeError("Sətir sayı sıfırdır — pipeline dayandırıldı.")
 
@@ -508,13 +540,13 @@ def run_pipeline(
 
     finally:
         duration = time.time() - start_time
-        cities   = ingest_mod.load_cities_from_csv()
+        all_cities_dict = ingest_mod.load_cities_from_csv()
 
         try:
             db_mod.log_pipeline_run(
                 conn,
                 mode=mode,
-                cities_count=len(cities),
+                cities_count=len(all_cities_dict),
                 rows_raw=rows_raw,
                 rows_staging=rows_stg,
                 rows_analytics=rows_ana,
@@ -577,17 +609,17 @@ Nümunələr:
     )
     parser.add_argument(
         "--data-dir",
-        default="data",
+        default=str(_DATA_DIR),
         help="Data qovluğunun yolu (default: data)",
     )
     parser.add_argument(
         "--db-path",
-        default="data/weather.duckdb",
+        default=str(_DB_PATH),
         help="DuckDB fayl yolu (default: data/weather.duckdb)",
     )
     parser.add_argument(
         "--log-dir",
-        default="logs",
+        default=str(_LOG_DIR),
         help="Log qovluğunun yolu (default: logs)",
     )
     parser.add_argument(
@@ -647,3 +679,5 @@ if __name__ == "__main__":
 
     if summary["status"] in ("ERROR", "ABORTED"):
         sys.exit(1)
+
+    

@@ -5,9 +5,8 @@ import json
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-BASE_DIR    = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.append(BASE_DIR)
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))          # .../web/backend/
+BASE_DIR    = os.path.dirname(os.path.dirname(CURRENT_DIR))        # .../Heat-Pulse/  ✅ (2x, not 3x)
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -15,6 +14,11 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 DB_PATH      = os.path.join(BASE_DIR, "data", "weather.duckdb")
 WEATHER_JSON = os.path.join(CURRENT_DIR, "data_web", "weather_predictions.json")
 ENERGY_JSON  = os.path.join(CURRENT_DIR, "data_web", "energy_forecast_30days.json")
+
+# Startup check
+print(f"[startup] BASE_DIR    = {BASE_DIR}")
+print(f"[startup] DB_PATH     = {DB_PATH}")
+print(f"[startup] DB exists   = {os.path.exists(DB_PATH)}")
 
 
 @app.get("/api/weather")
@@ -46,16 +50,15 @@ async def get_detailed_analytics(city_name: str):
             energy_data = json.load(f)
 
         target_raw = city_name.strip()
-        target = target_raw.capitalize()
-        target_lc = target_raw.lower()
+        target     = target_raw.capitalize()
+        target_lc  = target_raw.lower()
 
-        # Resolve JSON keys case-insensitively (DB/API cities are lowercase, JSON keys are usually Title case)
-        weather_cities = weather_data.get("cities", {})
+        weather_cities   = weather_data.get("cities", {})
         energy_locations = energy_data.get("locations", {})
-        weather_key = next((k for k in weather_cities.keys() if k.lower() == target_lc), target)
-        energy_key = next((k for k in energy_locations.keys() if k.lower() == target_lc), target)
+        weather_key = next((k for k in weather_cities   if k.lower() == target_lc), target)
+        energy_key  = next((k for k in energy_locations if k.lower() == target_lc), target)
 
-        # 1. HAVA: { "cities": { "Baku": [{date, temperature_2m_max, ...}] } }
+        # ── Hava proqnozu ────────────────────────────────────────────────────
         city_weather_list = weather_cities.get(weather_key, [])
         if not city_weather_list:
             return {"status": "error", "message": f"City '{target}' not found in weather data"}
@@ -74,23 +77,16 @@ async def get_detailed_analytics(city_name: str):
         ]
         latest = forecast_30[0] if forecast_30 else {}
 
-        # 2. ENERJİ saatliq: { "locations": { "Baku": [{year,month,day,hour,...}] } }
+        # ── Enerji proqnozu ──────────────────────────────────────────────────
         hourly_rows = energy_locations.get(energy_key, [])
 
-        # Model metrics
         metrics = {}
         for m in energy_data.get("model_metrics", []):
             t = m.get("target", "")
-            if t == "temperature_2m":
-                metrics["temp_r2"] = m.get("test_r2", 0)
-                metrics["temp_rmse"] = m.get("test_rmse", 0)
-            elif t == "wind_speed_10m":
-                metrics["wind_r2"] = m.get("test_r2", 0)
-                metrics["wind_rmse"] = m.get("test_rmse", 0)
-            elif t == "shortwave_radiation":
-                metrics["solar_r2"] = m.get("test_r2", 0)
+            if   t == "temperature_2m":    metrics["temp_r2"]   = m.get("test_r2", 0); metrics["temp_rmse"]  = m.get("test_rmse", 0)
+            elif t == "wind_speed_10m":    metrics["wind_r2"]   = m.get("test_r2", 0); metrics["wind_rmse"]  = m.get("test_rmse", 0)
+            elif t == "shortwave_radiation": metrics["solar_r2"] = m.get("test_r2", 0)
 
-        # Saatligi gunluk topla
         from collections import defaultdict
         daily_energy = defaultdict(lambda: {"wind": 0.0, "solar": 0.0})
         for row in hourly_rows:
@@ -111,12 +107,24 @@ async def get_detailed_analytics(city_name: str):
         total_wind  = round(sum(e["wind"]  for e in energy_30), 2)
         total_solar = round(sum(e["solar"] for e in energy_30), 2)
 
-        # 3. DuckDB tarixi data
+        # ── DuckDB tarixi data ───────────────────────────────────────────────
         hist_temps, hist_full = [], []
+
         if os.path.exists(DB_PATH):
             try:
                 conn = duckdb.connect(DB_PATH, read_only=True)
-                hist_temps = [r[0] for r in conn.execute("""
+
+                # Sütun adlarını yoxla — humidity mövcuddursa istifadə et
+                raw_cols = [r[0] for r in conn.execute(
+                    "SELECT column_name FROM information_schema.columns "
+                    "WHERE table_schema='raw' AND table_name='raw_historical'"
+                ).fetchall()]
+
+                has_humidity = "relative_humidity_2m_mean" in raw_cols
+
+                humidity_expr = "relative_humidity_2m_mean" if has_humidity else "NULL"
+
+                hist_temps = [r[0] for r in conn.execute(f"""
                     WITH merged AS (
                         SELECT time, temperature_2m_max, 1 AS src
                         FROM raw.raw_historical
@@ -132,18 +140,17 @@ async def get_detailed_analytics(city_name: str):
                         FROM merged
                     )
                     SELECT temperature_2m_max
-                    FROM dedup
-                    WHERE rn=1
+                    FROM dedup WHERE rn=1
                     ORDER BY time
                 """, [target_raw, target_raw]).fetchall()]
 
-                full_rows = conn.execute("""
+                full_rows = conn.execute(f"""
                     WITH merged AS (
                         SELECT time,
                                temperature_2m_max,
                                temperature_2m_min,
                                temperature_2m_mean,
-                               relative_humidity_2m_mean,
+                               {humidity_expr} AS relative_humidity_2m_mean,
                                wind_speed_10m_max,
                                shortwave_radiation_sum,
                                1 AS src
@@ -154,7 +161,7 @@ async def get_detailed_analytics(city_name: str):
                                temperature_2m_max,
                                temperature_2m_min,
                                temperature_2m_mean,
-                               relative_humidity_2m_mean,
+                               {humidity_expr} AS relative_humidity_2m_mean,
                                wind_speed_10m_max,
                                shortwave_radiation_sum,
                                2 AS src
@@ -174,32 +181,45 @@ async def get_detailed_analytics(city_name: str):
                            relative_humidity_2m_mean,
                            wind_speed_10m_max,
                            shortwave_radiation_sum
-                    FROM dedup
-                    WHERE rn=1
+                    FROM dedup WHERE rn=1
                     ORDER BY time
                 """, [target_raw, target_raw]).fetchall()
-                cols = ["date","temp_max","temp_min","temp_mean","humidity","wind","solar"]
-                hist_full = [{cols[i]: (float(v) if isinstance(v,(int,float)) and v is not None else str(v) if i==0 else None) for i,v in enumerate(row)} for row in full_rows]
-                conn.close()
-            except Exception as db_err:
-                print(f"DuckDB error: {db_err}")
 
+                cols = ["date","temp_max","temp_min","temp_mean","humidity","wind","solar"]
+                hist_full = [
+                    {cols[i]: (float(v) if isinstance(v, (int, float)) and v is not None
+                               else str(v) if i == 0
+                               else None)
+                     for i, v in enumerate(row)}
+                    for row in full_rows
+                ]
+                conn.close()
+
+            except Exception as db_err:
+                print(f"[DuckDB error] {db_err}")
+
+        # Fallback
         if not hist_temps:
             hist_temps = [d["temp_max"] for d in forecast_30 if d["temp_max"] is not None]
         if not hist_full:
-            hist_full = [{"date":d["date"],"temp_max":d["temp_max"],"temp_min":d["temp_min"],
-                "temp_mean": round((d["temp_max"]+d["temp_min"])/2,1) if d["temp_max"] and d["temp_min"] else None,
-                "humidity":d["humidity"],"wind":None,"solar":None} for d in forecast_30]
+            hist_full = [
+                {"date": d["date"], "temp_max": d["temp_max"], "temp_min": d["temp_min"],
+                 "temp_mean": round((d["temp_max"]+d["temp_min"])/2, 1)
+                    if d["temp_max"] and d["temp_min"] else None,
+                 "humidity": d["humidity"], "wind": None, "solar": None}
+                for d in forecast_30
+            ]
 
         return {
             "status": "success", "city": target,
-            "weather": latest,
-            "forecast": forecast_30,
-            "energy_forecast": energy_30,
-            "energy": {"wind": total_wind, "solar": total_solar, "total": round(total_wind+total_solar,2)},
+            "weather":          latest,
+            "forecast":         forecast_30,
+            "energy_forecast":  energy_30,
+            "energy":           {"wind": total_wind, "solar": total_solar,
+                                  "total": round(total_wind + total_solar, 2)},
             "accuracy_metrics": metrics,
-            "hist_temps": hist_temps,
-            "hist_full": hist_full,
+            "hist_temps":       hist_temps,
+            "hist_full":        hist_full,
         }
 
     except Exception as e:
