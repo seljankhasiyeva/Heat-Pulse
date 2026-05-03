@@ -202,12 +202,13 @@ def check_date_continuity(
     problems: list[str] = []
 
     for city, group in df.groupby("city"):
-        dates   = group["time"].dt.normalize().sort_values().unique()
-        if len(dates) < 2:
-            continue
-        diffs   = pd.Series(dates).diff().dropna().dt.days
+        dates = pd.Series(
+        group["time"].dt.normalize().sort_values().unique()
+            ).sort_values().reset_index(drop=True)
+
+        diffs = dates.diff().dropna().dt.days
         max_gap = diffs.max()
-        if max_gap > max_gap_days:
+        if pd.notna(max_gap) and max_gap > max_gap_days:
             problems.append(f"{city} (max gap {max_gap:.0f} days)")
 
     if problems:
@@ -365,15 +366,16 @@ def run_all_checks(
     results: list[dict] = []
 
     # ── raw_historical ────────────────────────────────────────────────────────
-    _raw = raw_df if raw_df is not None else _safe_read(conn, "raw_historical")
+    _raw = raw_df if raw_df is not None else _safe_read(conn, "raw.raw_historical")
     if _raw is not None and not _raw.empty:
         results.append(check_row_count(_raw,  table_or_stage="raw_historical"))
         results.append(check_freshness(_raw,  table_or_stage="raw_historical"))
-    elif _raw is not None and _raw.empty:
-        results.append(check_row_count(_raw,  table_or_stage="raw_historical"))
+    else:  # None deyil amma boşdur
+        results.append({"check_name": "row_count", "stage": "raw_historical",
+                        "status": "FAIL", "details": "Table is empty."})
 
     # ── staging_historical ────────────────────────────────────────────────────
-    _stg = staging_df if staging_df is not None else _safe_read(conn, "staging_historical")
+    _stg = staging_df if staging_df is not None else _safe_read(conn, "staging.staging_historical")
     if _stg is not None and not _stg.empty:
         results.append(check_row_count(_stg,          table_or_stage="staging_historical"))
         results.append(check_null_ratio(_stg,          table_or_stage="staging_historical"))
@@ -381,7 +383,7 @@ def run_all_checks(
         results.append(check_value_ranges(_stg,        table_or_stage="staging_historical"))
 
     # ── analytics_historical ──────────────────────────────────────────────────
-    _ana = analytics_df if analytics_df is not None else _safe_read(conn, "analytics_historical")
+    _ana = analytics_df if analytics_df is not None else _safe_read(conn, "analytics.analytics_historical")
     if _ana is not None and not _ana.empty:
         results.append(check_row_count(_ana,              table_or_stage="analytics_historical"))
         results.append(check_feature_completeness(_ana,   table_or_stage="analytics_historical"))

@@ -94,7 +94,7 @@ def fetch_city_weather(
     longitude: float,
     start_date: str,
     end_date: str,
-    retries: int = 3,
+    retries: int = 5,
     backoff: float = 2.0,
     is_forecast: bool = False,
 ) -> Optional[pd.DataFrame]:
@@ -102,6 +102,7 @@ def fetch_city_weather(
     Fetch daily weather for one city from Open-Meteo.
     Returns a DataFrame with columns: time, city, latitude, longitude, <vars>.
     Returns None on failure.
+    429 Too Many Requests aldıqda 60 saniyə gözləyir.
     """
     url = FORECAST_URL if is_forecast else HISTORICAL_URL
     params = {
@@ -116,8 +117,8 @@ def fetch_city_weather(
 
     for attempt in range(1, retries + 1):
         try:
-            label = "7-day forecast" if is_forecast else f"{start_date} → {end_date}"
-            logger.info(f"[{city}] Fetching {label} (attempt {attempt})")
+            label = "7-day forecast" if is_forecast else f"{start_date} -> {end_date}"
+            logger.info(f"[{city}] Fetching {label} (attempt {attempt}/{retries})")
             resp = requests.get(url, params=params, timeout=60)
             resp.raise_for_status()
             data = resp.json()
@@ -127,12 +128,10 @@ def fetch_city_weather(
                 return None
 
             df = pd.DataFrame(data["daily"])
-            # API returns date column as 'time' — keep it as-is to match cleaning.py
             df["city"]      = city
             df["latitude"]  = latitude
             df["longitude"] = longitude
 
-            # Ensure all expected columns present
             for col in DAILY_VARIABLES:
                 if col not in df.columns:
                     df[col] = None
@@ -144,11 +143,14 @@ def fetch_city_weather(
             return df
 
         except requests.exceptions.RequestException as e:
-            logger.warning(f"[{city}] Attempt {attempt} failed: {e}")
+            is_429 = "429" in str(e)
             if attempt < retries:
-                _time.sleep(backoff * attempt)
+                wait = 60 if is_429 else backoff * attempt
+                logger.warning(f"[{city}] Attempt {attempt} failed ({'rate limit' if is_429 else 'error'}). Waiting {wait}s...")
+                _time.sleep(wait)
+            else:
+                logger.error(f"[{city}] All {retries} attempts failed: {e}")
 
-    logger.error(f"[{city}] All {retries} attempts failed.")
     return None
 
 
@@ -160,28 +162,62 @@ def ingest_all_cities_full(
     cities: dict = None,
     start_date: str = DEFAULT_START_DATE,
     end_date:   str = None,
+    skip_existing: bool = True,
+    existing_cities: set = None,
 ) -> pd.DataFrame:
-    """Fetch complete historical data for every city. Returns combined DataFrame."""
+    """
+    Fetch complete historical data for every city.
+
+    skip_existing=True  → DB-də artıq olan şəhərləri keç
+    existing_cities     → DB-də olan şəhərlərin set-i (pipeline.py-dan gəlir)
+
+    Hər şəhər uğurla yüklənəndən sonra checkpoint parquet saxlayır.
+    Növbəti run-da DB-dəki şəhərlər skip olunur — rate limit keçilsə belə
+    progress itirilmir.
+    """
     if cities is None:
         cities = load_cities_from_csv()
     if end_date is None:
         end_date = str(date.today())
+    if existing_cities is None:
+        existing_cities = set()
 
-    frames = []
+    RAW_DIR.mkdir(parents=True, exist_ok=True)
+
+    frames  = []
+    skipped = 0
+
     for city, coords in cities.items():
+        # DB-də artıq varsa skip et
+        if skip_existing and city in existing_cities:
+            logger.info(f"[{city}] Already updated in DB — skipping.")
+            skipped += 1
+            continue
+
         df = fetch_city_weather(
             city, coords["latitude"], coords["longitude"],
             start_date, end_date,
         )
         if df is not None and not df.empty:
             frames.append(df)
+            # Hər şəhərdən sonra dərhal checkpoint yaz
+            ckpt = RAW_DIR / f"checkpoint_{city}.parquet"
+            df.to_parquet(ckpt, index=False)
+            logger.info(f"[{city}] Checkpoint saved -> {ckpt}")
+        else:
+            logger.warning(f"[{city}] No data fetched — will retry on next run.")
+
+    logger.info(
+        f"Full ingest: {len(frames)} cities fetched, "
+        f"{skipped} cities skipped (already in DB)."
+    )
 
     if not frames:
-        logger.error("No data fetched for any city.")
+        logger.info("No new data — all cities already in DB.")
         return pd.DataFrame()
 
     combined = pd.concat(frames, ignore_index=True)
-    logger.info(f"Full ingest complete: {len(combined):,} rows from {len(frames)} cities.")
+    logger.info(f"Full ingest complete: {len(combined):,} rows, {len(frames)} cities.")
     return combined
 
 
@@ -214,7 +250,7 @@ def ingest_incremental(
         last = latest_dates.get(city)
 
         if last is not None:
-            if hasattr(last, "date"):           # datetime → date
+            if hasattr(last, "date"):
                 last = last.date()
             elif isinstance(last, str):
                 last = pd.to_datetime(last).date()
@@ -232,7 +268,7 @@ def ingest_incremental(
         )
         if df is not None and not df.empty:
             frames.append(df)
-            logger.info(f"[{city}] {len(df)} new rows ({start} → {end_date}).")
+            logger.info(f"[{city}] {len(df)} new rows ({start} -> {end_date}).")
         else:
             logger.info(f"[{city}] No new rows available.")
 
