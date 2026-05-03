@@ -1,0 +1,196 @@
+import sys, os, json, duckdb
+from collections import defaultdict
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR   = os.path.dirname(os.path.dirname(SCRIPT_DIR))
+
+DB_PATH      = os.path.join(BASE_DIR, "data", "weather.duckdb")
+WEATHER_JSON = os.path.join(SCRIPT_DIR, "data_web", "weather_predictions.json")
+ENERGY_JSON  = os.path.join(SCRIPT_DIR, "data_web", "energy_forecast_30days.json")
+OUTPUT_JSON  = os.path.join(SCRIPT_DIR, "data_web", "static_cities.json")
+
+print(f"DB_PATH    = {DB_PATH}")
+print(f"DB exists  = {os.path.exists(DB_PATH)}")
+
+# ── JSON-ları yüklə ────────────────────────────────────────────────────────
+with open(WEATHER_JSON, "r", encoding="utf-8") as f:
+    weather_data = json.load(f)
+with open(ENERGY_JSON, "r", encoding="utf-8") as f:
+    energy_data = json.load(f)
+
+weather_cities   = weather_data.get("cities", {})
+energy_locations = energy_data.get("locations", {})
+
+# ── Model metriklər ────────────────────────────────────────────────────────
+metrics_global = {}
+for m in energy_data.get("model_metrics", []):
+    t = m.get("target", "")
+    if   t == "temperature_2m":      metrics_global["temp_r2"]  = m.get("test_r2", 0); metrics_global["temp_rmse"]  = m.get("test_rmse", 0)
+    elif t == "wind_speed_10m":      metrics_global["wind_r2"]  = m.get("test_r2", 0); metrics_global["wind_rmse"]  = m.get("test_rmse", 0)
+    elif t == "shortwave_radiation": metrics_global["solar_r2"] = m.get("test_r2", 0)
+
+# ── DuckDB: şəhər koordinatları + hist data ────────────────────────────────
+city_coords = {}
+hist_data   = {}
+
+if os.path.exists(DB_PATH):
+    conn = duckdb.connect(DB_PATH, read_only=True)
+
+    # Koordinatlar
+    rows = conn.execute("""
+        SELECT city, latitude, longitude
+        FROM raw.raw_forecast
+        QUALIFY ROW_NUMBER() OVER (PARTITION BY city ORDER BY time DESC) = 1
+    """).fetchall()
+    for city, lat, lon in rows:
+        city_coords[city.lower()] = {"lat": lat, "lon": lon}
+
+    # Humidity sütunu varmı?
+    raw_cols = [r[0] for r in conn.execute(
+        "SELECT column_name FROM information_schema.columns "
+        "WHERE table_schema='raw' AND table_name='raw_historical'"
+    ).fetchall()]
+    humidity_expr = "relative_humidity_2m_mean" if "relative_humidity_2m_mean" in raw_cols else "NULL"
+
+    # Bütün şəhərlərin hist_full datası
+    full_rows = conn.execute(f"""
+        WITH merged AS (
+            SELECT city, time,
+                   temperature_2m_max, temperature_2m_min, temperature_2m_mean,
+                   {humidity_expr} AS humidity,
+                   wind_speed_10m_max AS wind,
+                   shortwave_radiation_sum AS solar,
+                   1 AS src
+            FROM raw.raw_historical
+            WHERE temperature_2m_max IS NOT NULL
+            UNION ALL
+            SELECT city, time,
+                   temperature_2m_max, temperature_2m_min, temperature_2m_mean,
+                   {humidity_expr} AS humidity,
+                   wind_speed_10m_max AS wind,
+                   shortwave_radiation_sum AS solar,
+                   2 AS src
+            FROM raw.raw_forecast
+            WHERE temperature_2m_max IS NOT NULL
+        ),
+        dedup AS (
+            SELECT *,
+                   ROW_NUMBER() OVER (PARTITION BY city, time ORDER BY src) AS rn
+            FROM merged
+        )
+        SELECT city,
+               CAST(time AS VARCHAR) AS date,
+               temperature_2m_max, temperature_2m_min,
+               COALESCE(temperature_2m_mean,
+                   (temperature_2m_max + temperature_2m_min) / 2.0) AS temp_mean,
+               humidity, wind, solar
+        FROM dedup WHERE rn=1
+        ORDER BY city, time
+    """).fetchall()
+    conn.close()
+
+    for row in full_rows:
+        city_lc = row[0].lower()
+        if city_lc not in hist_data:
+            hist_data[city_lc] = []
+        hist_data[city_lc].append({
+            "date":      row[1],
+            "temp_max":  float(row[2]) if row[2] is not None else None,
+            "temp_min":  float(row[3]) if row[3] is not None else None,
+            "temp_mean": float(row[4]) if row[4] is not None else None,
+            "humidity":  float(row[5]) if row[5] is not None else None,
+            "wind":      float(row[6]) if row[6] is not None else None,
+            "solar":     float(row[7]) if row[7] is not None else None,
+        })
+
+# ── Hər şəhər üçün tam obyekt yarat ───────────────────────────────────────
+result = []
+
+for city_name, city_weather_list in weather_cities.items():
+    city_lc = city_name.lower()
+
+    # Koordinatlar
+    coords = city_coords.get(city_lc, {})
+    lat = coords.get("lat")
+    lon = coords.get("lon")
+    if lat is None or lon is None:
+        print(f"[SKIP] {city_name} — koordinat yoxdur")
+        continue
+
+    # 30 günlük hava proqnozu
+    forecast_30 = [
+        {
+            "date":      w.get("date"),
+            "temp_max":  w.get("temperature_2m_max"),
+            "temp_min":  w.get("temperature_2m_min"),
+            "humidity":  w.get("relative_humidity_2m_mean"),
+            "condition": w.get("weather_category"),
+            "impact":    w.get("impact_score"),
+            "alert":     w.get("persistence_alert_level"),
+        }
+        for w in city_weather_list
+    ]
+    latest = forecast_30[0] if forecast_30 else {}
+
+    # Enerji proqnozu
+    energy_key  = next((k for k in energy_locations if k.lower() == city_lc), city_name)
+    hourly_rows = energy_locations.get(energy_key, [])
+    daily_energy = defaultdict(lambda: {"wind": 0.0, "solar": 0.0})
+    for row in hourly_rows:
+        yr, mo, dy = row.get("year"), row.get("month"), row.get("day")
+        if yr is None or mo is None or dy is None:
+            continue
+        ds = f"{int(yr):04d}-{int(mo):02d}-{int(dy):02d}"
+        daily_energy[ds]["wind"]  += float(row.get("Envision_wind_kWh",   0) or 0)
+        daily_energy[ds]["wind"]  += float(row.get("Fuhrlander_wind_kWh", 0) or 0)
+        daily_energy[ds]["solar"] += float(row.get("Jinko_Solar_kWh",     0) or 0)
+        daily_energy[ds]["solar"] += float(row.get("Trina_Solar_kWh",     0) or 0)
+
+    energy_30 = [
+        {"date": ds, "wind": round(v["wind"], 2), "solar": round(v["solar"], 2),
+         "total": round(v["wind"] + v["solar"], 2)}
+        for ds, v in sorted(daily_energy.items())
+    ]
+    total_wind  = round(sum(e["wind"]  for e in energy_30), 2)
+    total_solar = round(sum(e["solar"] for e in energy_30), 2)
+
+    # hist_full — DuckDB-dən, fallback forecast
+    city_hist = hist_data.get(city_lc, [])
+    if not city_hist:
+        city_hist = [
+            {"date": d["date"], "temp_max": d["temp_max"], "temp_min": d["temp_min"],
+             "temp_mean": round((d["temp_max"]+d["temp_min"])/2, 1)
+                if d["temp_max"] and d["temp_min"] else None,
+             "humidity": d["humidity"], "wind": None, "solar": None}
+            for d in forecast_30
+        ]
+
+    hist_temps = [r["temp_max"] for r in city_hist if r["temp_max"] is not None]
+
+    result.append({
+        "city":             city_name,
+        "lat":              lat,
+        "lon":              lon,
+        # weather — latest forecast (app.js renderWeatherSection üçün)
+        "weather": {
+            "temp_max":  latest.get("temp_max"),
+            "temp_min":  latest.get("temp_min"),
+            "humidity":  latest.get("humidity"),
+            "condition": latest.get("condition"),
+            "impact":    latest.get("impact"),
+            "alert":     latest.get("alert", 0),
+            "date":      latest.get("date"),
+        },
+        "forecast":         forecast_30,
+        "energy_forecast":  energy_30,
+        "energy":           {"wind": total_wind, "solar": total_solar,
+                             "total": round(total_wind + total_solar, 2)},
+        "accuracy_metrics": metrics_global,
+        "hist_temps":       hist_temps,
+        "hist_full":        city_hist,
+    })
+
+with open(OUTPUT_JSON, "w", encoding="utf-8") as f:
+    json.dump(result, f, ensure_ascii=False)
+
+print(f"✅ {len(result)} şəhər → {OUTPUT_JSON}")
