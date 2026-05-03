@@ -21,23 +21,22 @@ const smallIcon = L.icon({
 // ── DOM Elementləri ───────────────────────────────────────────────────────
 const sidebar     = document.getElementById('sidebar');
 const overlay     = document.getElementById('overlay');
-const closeBtn    = document.getElementById('close-btn');
 const searchInput = document.getElementById('map-search');
 const modeBtn     = document.getElementById('toggle-mode');
 
-// ── 2. Backend-dən şəhər listini çək ─────────────────────────────────────
+// ── Statik JSON-dan şəhər listini çək ────────────────────────────────────
 async function fetchWeatherData() {
     try {
-        const res    = await fetch('http://127.0.0.1:8000/api/weather');
-        const result = await res.json();
-        if (result.status === "success") {
-            globalData = result.data;
-            displayCities(globalData);
-        }
-    } catch (e) { console.error("Backend xətası:", e); }
+        const res  = await fetch('data/static_cities.json');
+        const data = await res.json();
+        globalData = data;
+        displayCities(globalData);
+    } catch (e) {
+        console.error("Məlumat yüklənmədi:", e);
+    }
 }
 
-// ── 3. Marker-ləri xəritəyə əlavə et ─────────────────────────────────────
+// ── Marker-ləri xəritəyə əlavə et ────────────────────────────────────────
 function displayCities(cities) {
     cities.forEach(city => {
         const marker = L.marker([city.lat, city.lon], { icon: smallIcon }).addTo(map);
@@ -48,41 +47,35 @@ function displayCities(cities) {
     });
 }
 
-// ── 4. Sidebar-ı aç və datanı doldur ─────────────────────────────────────
-async function openDetails(city) {
+// ── Sidebar-ı aç və datanı doldur ─────────────────────────────────────────
+function openDetails(city) {
     sidebar.classList.remove('-translate-x-full');
     overlay.classList.remove('hidden');
     setLoadingState();
 
-    try {
-        const res    = await fetch(`http://127.0.0.1:8000/api/details/${city.city}`);
-        const result = await res.json();
-        if (result.status !== "success") { console.error("Backend Error:", result.message); return; }
+    const w  = city.weather          || {};
+    const e  = city.energy           || {};
+    const m  = city.accuracy_metrics || {};
+    const fc = city.forecast         || [];
+    const ef = city.energy_forecast  || [];
+    const ht = city.hist_temps       || [];
 
-        const w  = result.weather;
-        const e  = result.energy;
-        const m  = result.accuracy_metrics;
-        const fc = result.forecast;
-        const ef = result.energy_forecast;
-        const ht = result.hist_temps || [];
+    renderWeatherSection(city.city, w);
+    renderImpactSection(w);
+    renderMetricsSection(m, e);
 
-        // Sol panel
-        renderWeatherSection(result.city, w);
-        renderImpactSection(w);
-        renderMetricsSection(m, e);
-
-        // Sağ panel — sidebar transition 500ms, ona görə 520ms gözləyirik
-        setTimeout(() => {
-            // 1. Shell + bütün chartlar (tempChart daxil)
-            renderAllCharts(result);
-            // 2. tempChart (distribusiya histoqramı) — shell yarandıqdan sonra
-            initCharts(fc, ef, ht);
-            // 3. Cədvəllər — shell-dəki ID-lərə yazılır
-            renderForecastTable(fc);
-            renderEnergyTable(ef);
-        }, 520);
-
-    } catch (err) { console.error("Connection Error:", err); }
+    setTimeout(() => {
+        renderAllCharts({
+            ...city,
+            forecast:        fc,
+            energy_forecast: ef,
+            hist_temps:      ht,
+            hist_full:       city.hist_full || []
+        });
+        initCharts(fc, ef, ht);
+        renderForecastTable(fc);
+        renderEnergyTable(ef);
+    }, 520);
 }
 
 // ── Sol panel render funksiyaları ─────────────────────────────────────────
@@ -157,11 +150,11 @@ function renderMetricsSection(m, e) {
     `;
 }
 
-// ── Sağ panel: 30 günlük Hava cədvəli ────────────────────────────────────
+// ── 30 günlük Hava cədvəli ────────────────────────────────────────────────
 function renderForecastTable(fc) {
     const container = document.getElementById('forecast-table-container');
     if (!container || !fc || fc.length === 0) return;
-    const conditionEmoji = c => ({ 'Sunny':'☀️','Clear':'🌙','Rain':'🌧','Cloudy':'☁️','Snow':'❄️','Storm':'⛈️','Fog':'🌫️' })[c] || '🌡️';
+    const conditionEmoji = c => ({'Sunny':'☀️','Clear':'🌙','Rain':'🌧','Cloudy':'☁️','Snow':'❄️','Storm':'⛈️','Fog':'🌫️'})[c] || '🌡️';
     const rows = fc.map(d => `
         <tr class="border-b border-gray-800/50 hover:bg-white/5 transition-colors">
             <td class="py-2 pr-4 text-gray-500 text-xs font-mono whitespace-nowrap">${d.date}</td>
@@ -198,7 +191,7 @@ function impactColor(score) {
     return 'text-green-400';
 }
 
-// ── Sağ panel: 30 günlük Enerji cədvəli ──────────────────────────────────
+// ── 30 günlük Enerji cədvəli ──────────────────────────────────────────────
 function renderEnergyTable(ef) {
     const container = document.getElementById('energy-table-container');
     if (!container || !ef || ef.length === 0) return;
@@ -221,7 +214,7 @@ function renderEnergyTable(ef) {
         </table>`;
 }
 
-// ── Chart.js — tempChart (distribusiya) + energyChart ────────────────────
+// ── Chart.js ──────────────────────────────────────────────────────────────
 function initCharts(fc, ef, histTemps) {
     if (tempChartInst)   { tempChartInst.destroy();   tempChartInst   = null; }
     if (energyChartInst) { energyChartInst.destroy(); energyChartInst = null; }
@@ -235,7 +228,6 @@ function initCharts(fc, ef, histTemps) {
         ? histTemps
         : (fc || []).map(d => d.temp_max).filter(v => v != null);
 
-    // ── Distribusiya Histoqramı ───────────────────────────────────────
     const tempCtx = document.getElementById('tempChart');
     if (tempCtx && distValues.length > 0) {
         const values = distValues;
@@ -253,46 +245,32 @@ function initCharts(fc, ef, histTemps) {
         const binW = (maxV - minV) / BINS;
         const counts = Array(BINS).fill(0);
         values.forEach(v => { let i = Math.floor((v - minV) / binW); if (i >= BINS) i = BINS - 1; counts[i]++; });
-        const density    = counts.map(c => c / (values.length * binW));
-        const binCenters = Array.from({ length: BINS }, (_, i) => minV + (i + 0.5) * binW);
-        const binLabels  = binCenters.map(v => v.toFixed(1) + '°');
+        const density   = counts.map(c => c / (values.length * binW));
+        const binLabels = Array.from({ length: BINS }, (_, i) => (minV + (i + 0.5) * binW).toFixed(1) + '°');
 
         const CURVE_POINTS = 60;
-        const step  = (maxV - minV) / CURVE_POINTS;
-        const curveX = Array.from({ length: CURVE_POINTS + 1 }, (_, i) => minV + i * step);
+        const curveX = Array.from({ length: CURVE_POINTS + 1 }, (_, i) => minV + i * (maxV - minV) / CURVE_POINTS);
         const curveY = curveX.map(x => (1/(std*Math.sqrt(2*Math.PI))) * Math.exp(-0.5*((x-mean)/std)**2));
 
         tempChartInst = new Chart(tempCtx, {
             data: {
                 labels: binLabels,
                 datasets: [
-                    { type:'bar',  label:'Density',     data:density, backgroundColor:'rgba(66,165,245,0.55)', borderColor:'rgba(255,255,255,0.15)', borderWidth:0.5, borderRadius:2, order:2 },
-                    { type:'line', label:'Normal fit',  data:curveY.filter((_,i)=>i%Math.ceil(CURVE_POINTS/BINS)===0).slice(0,BINS), borderColor:'#ef4444', borderWidth:2, pointRadius:0, tension:0.5, fill:false, order:1 }
+                    { type:'bar',  label:'Density',    data:density, backgroundColor:'rgba(66,165,245,0.55)', borderColor:'rgba(255,255,255,0.15)', borderWidth:0.5, borderRadius:2, order:2 },
+                    { type:'line', label:'Normal fit', data:curveY.filter((_,i)=>i%Math.ceil(CURVE_POINTS/BINS)===0).slice(0,BINS), borderColor:'#ef4444', borderWidth:2, pointRadius:0, tension:0.5, fill:false, order:1 }
                 ]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                animation: { duration: 600 },
+                responsive: true, maintainAspectRatio: false, animation: { duration: 600 },
                 plugins: {
-                    legend: { labels: { color:'#9ca3af', font:{ size:10 }, boxWidth:12 } },
-                    title: {
-                        display: true,
-                        text: 'Distribution of Daily Max Temperature',
-                        color: '#9ca3af',
-                        font: { size:11, weight:'bold' },
-                    },
-                    subtitle: {
-                        display: true,
-                        text: `Skew=${skew.toFixed(2)}  |  Mean=${mean.toFixed(1)}°  |  Median=${median.toFixed(1)}°  |  σ=${std.toFixed(1)}  →  [${swLabel}]`,
-                        color: '#9ca3af',
-                        font: { size:9 }
-                    },
-                    tooltip: { callbacks: { label: ctx => ctx.datasetIndex===0 ? `Density: ${ctx.parsed.y.toFixed(4)}` : `Normal: ${ctx.parsed.y.toFixed(4)}` } }
+                    legend: { labels: { color:'#9ca3af', font:{size:10}, boxWidth:12 } },
+                    title:    { display:true, text:'Distribution of Daily Max Temperature', color:'#9ca3af', font:{size:11, weight:'bold'} },
+                    subtitle: { display:true, text:`Skew=${skew.toFixed(2)}  |  Mean=${mean.toFixed(1)}°  |  Median=${median.toFixed(1)}°  |  σ=${std.toFixed(1)}  →  [${swLabel}]`, color:'#9ca3af', font:{size:9} },
+                    tooltip:  { callbacks: { label: ctx => ctx.datasetIndex===0 ? `Density: ${ctx.parsed.y.toFixed(4)}` : `Normal: ${ctx.parsed.y.toFixed(4)}` } }
                 },
                 scales: {
-                    x: { ticks:{ color:'#6b7280', font:{size:9} }, grid:{ color:'rgba(255,255,255,0.05)' }, title:{ display:true, text:'Max Temp (°C)', color:'#6b7280', font:{size:9} } },
-                    y: { ticks:{ color:'#6b7280', font:{size:9} }, grid:{ color:'rgba(255,255,255,0.05)' }, title:{ display:true, text:'Density',      color:'#6b7280', font:{size:9} } }
+                    x: { ticks:{color:'#6b7280',font:{size:9}}, grid:{color:'rgba(255,255,255,0.05)'}, title:{display:true,text:'Max Temp (°C)',color:'#6b7280',font:{size:9}} },
+                    y: { ticks:{color:'#6b7280',font:{size:9}}, grid:{color:'rgba(255,255,255,0.05)'}, title:{display:true,text:'Density',color:'#6b7280',font:{size:9}} }
                 }
             },
             plugins: [{
@@ -303,12 +281,10 @@ function initCharts(fc, ef, histTemps) {
                     const medBin  = (median - minV) / binW - 0.5;
                     const toPixel = bi => x.left + ((bi - x.min) / (x.max - x.min)) * (x.right - x.left);
                     c.save();
-                    // Mean
                     c.beginPath(); c.strokeStyle='#1e3a8a'; c.lineWidth=1.8; c.setLineDash([5,4]);
                     c.moveTo(toPixel(meanBin), y.top); c.lineTo(toPixel(meanBin), y.bottom); c.stroke();
                     c.fillStyle='#93c5fd'; c.font='bold 9px sans-serif';
                     c.fillText(`Mean=${mean.toFixed(1)}°`, toPixel(meanBin)+4, y.top+14);
-                    // Median
                     c.beginPath(); c.strokeStyle='#16a34a'; c.setLineDash([3,3]);
                     c.moveTo(toPixel(medBin), y.top); c.lineTo(toPixel(medBin), y.bottom); c.stroke();
                     c.fillStyle='#86efac';
@@ -319,7 +295,6 @@ function initCharts(fc, ef, histTemps) {
         });
     }
 
-    // ── Enerji Qrafiki ────────────────────────────────────────────────
     const energyCtx = document.getElementById('energyChart');
     if (energyCtx && ef && ef.length > 0) {
         energyChartInst = new Chart(energyCtx, {
@@ -338,22 +313,19 @@ function initCharts(fc, ef, histTemps) {
 
 function chartOptions(title, stacked=false) {
     return {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false,
         plugins: {
             legend: { labels: { color:'#9ca3af', font:{size:10}, boxWidth:12 } },
             title:  { display:true, text:title, color:'#9ca3af', font:{size:11, weight:'bold'} }
         },
         scales: {
-            x: { stacked, ticks:{ color:'#6b7280', font:{size:9}, maxRotation:45 }, grid:{ color:'rgba(255,255,255,0.04)' } },
-            y: { stacked, ticks:{ color:'#6b7280', font:{size:9} },                 grid:{ color:'rgba(255,255,255,0.06)' } }
+            x: { stacked, ticks:{color:'#6b7280',font:{size:9},maxRotation:45}, grid:{color:'rgba(255,255,255,0.04)'} },
+            y: { stacked, ticks:{color:'#6b7280',font:{size:9}},                grid:{color:'rgba(255,255,255,0.06)'} }
         }
     };
 }
 
 // ── Yükləmə göstəricisi ───────────────────────────────────────────────────
-// FIX: cədvəl ID-ləri silindi — onlar artıq _buildRightPanelShell tərəfindən
-//      idarə edilir, setLoadingState zamanı hələ DOM-da yoxdurlar
 function setLoadingState() {
     ['weather-section', 'impact-section', 'metrics-section'].forEach(id => {
         const el = document.getElementById(id);
@@ -395,7 +367,6 @@ function closeSidebar() {
 }
 
 // ── Event Listeners ───────────────────────────────────────────────────────
-if (closeBtn)    closeBtn.addEventListener('click', closeSidebar);
 if (overlay)     overlay.addEventListener('click', closeSidebar);
 if (modeBtn)     modeBtn.addEventListener('click', toggleColorfulMode);
 if (searchInput) searchInput.addEventListener('input', e => {
@@ -404,7 +375,7 @@ if (searchInput) searchInput.addEventListener('input', e => {
     if (found) map.flyTo([found.lat, found.lon], 9, { duration:1 });
 });
 
-// ── Admin Panel ───────────────────────────────────────────────────────────
+// ── Admin Panel (deaktiv — GitHub Pages-də backend yoxdur) ────────────────
 const adminBtn   = document.getElementById('admin-btn');
 const adminModal = document.getElementById('admin-modal');
 const closeAdmin = document.getElementById('close-admin');
@@ -413,26 +384,10 @@ const adminForm  = document.getElementById('admin-form');
 if (adminBtn)   adminBtn.onclick   = () => adminModal.classList.replace('hidden','flex');
 if (closeAdmin) closeAdmin.onclick = () => adminModal.classList.replace('flex','hidden');
 if (adminForm) {
-    adminForm.onsubmit = async e => {
+    adminForm.onsubmit = e => {
         e.preventDefault();
-        const newCity = {
-            city: document.getElementById('city-name').value,
-            lat:  parseFloat(document.getElementById('city-lat').value),
-            lon:  parseFloat(document.getElementById('city-lon').value),
-            temp: parseFloat(document.getElementById('city-temp').value),
-            risk: parseFloat(document.getElementById('city-temp').value) > 30 ? "High" : "Low"
-        };
-        try {
-            const res = await fetch('http://127.0.0.1:8000/api/admin/add', {
-                method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(newCity)
-            });
-            if (res.ok) {
-                alert(`${newCity.city} uğurla əlavə edildi!`);
-                adminForm.reset();
-                adminModal.classList.replace('flex','hidden');
-                fetchWeatherData();
-            }
-        } catch (err) { console.error("Əlavə etmə xətası:", err); alert("Serverə qoşulmaq mümkün olmadı!"); }
+        alert('Admin panel yalnız lokal mühitdə işləyir.');
+        adminModal.classList.replace('flex','hidden');
     };
 }
 
