@@ -50,6 +50,38 @@ function darkPlugins(title='',sub=''){
 // Every Chart.js chart must have these two — fills the container div
 function base(extra={}){return{responsive:true,maintainAspectRatio:false,...extra};}
 
+/** Son tarixdən geriyə n təqvim ili (hər ilin 1 Yanvardan): ən yeni il daxil olmaqla. */
+function filterHistLastNYears(rows,nYears){
+    if(!rows||!rows.length||nYears<1)return rows||[];
+    const ts=[];
+    for(const r of rows){
+        const d=new Date(r.date);
+        if(!isNaN(d))ts.push(d.getTime());
+    }
+    if(!ts.length)return rows;
+    const end=new Date(Math.max(...ts));
+    const start=new Date(end.getFullYear()-(nYears-1),0,1);
+    return rows.filter(r=>{
+        const d=new Date(r.date);
+        return !isNaN(d)&&d>=start;
+    });
+}
+
+/** Yalnız bu illər arası (hər iki tərəf daxil) — time series / decomp / YoY / heatmap. */
+function filterHistInclusiveYearRange(rows,y0,y1){
+    if(!rows||!rows.length)return[];
+    return rows.filter(r=>{
+        const d=new Date(r.date);
+        if(isNaN(d))return false;
+        const y=d.getFullYear();
+        return y>=y0&&y<=y1;
+    });
+}
+
+const HIST_WINDOW_YEARS=6;
+const FOCUS_YEAR_START=2025;
+const FOCUS_YEAR_END=2026;
+
 // ══════════════════════════════════════════════════════════════════════════════
 //  MASTER ENTRY
 // ══════════════════════════════════════════════════════════════════════════════
@@ -59,11 +91,8 @@ function renderAllCharts(apiResult){
     const city=apiResult.city||'—';
     const fc=apiResult.forecast||[];
     const histFullRaw=apiResult.hist_full||[];
-    const cutoff=new Date('2025-01-01');
-    const histFull=histFullRaw.filter(r=>{
-        const d=new Date(r.date);
-        return !isNaN(d)&&d>=cutoff;
-    });
+    const histFull=filterHistLastNYears(histFullRaw,HIST_WINDOW_YEARS);
+    const histFocus=filterHistInclusiveYearRange(histFull,FOCUS_YEAR_START,FOCUS_YEAR_END);
     const histTemps=(histFull.map(r=>r.temp_max).filter(v=>v!=null).length>0)
         ? histFull.map(r=>r.temp_max).filter(v=>v!=null)
         : (apiResult.hist_temps||[]);
@@ -73,10 +102,10 @@ function renderAllCharts(apiResult){
     setTimeout(()=>{
         chart2_SeasonalBoxplot(city,histFull,histTemps);
         chart3_QQ(city,histTemps);
-        chart4_TimeSeries(city,histFull);
-        chart5_Decomposition(city,histFull);
-        chart6_YearOverYear(city,histFull);
-        chart7_CalendarHeatmap(city,histFull);
+        chart4_TimeSeries(city,histFocus);
+        chart5_Decomposition(city,histFocus);
+        chart6_YearOverYear(city,histFocus);
+        chart7_CalendarHeatmap(city,histFocus);
         chart8_AllCities(fc,city);
         chart9_ScatterMatrix(city,histFull);
         chart10_CorrMatrix(city,histFull);
@@ -89,6 +118,11 @@ function renderAllCharts(apiResult){
 function _buildRightPanelShell(city){
     const panel=document.querySelector('#sidebar .flex-1');
     if(!panel)return;
+    const y0=FOCUS_YEAR_START,y1=FOCUS_YEAR_END;
+    const tsTitle=`📆 Full Time Series (${y0}–${y1})`;
+    const decompTitle=`🔬 Seasonal Decomposition (${y0}–${y1})`;
+    const yoyTitle=`📊 Year-over-Year Temperature (${y0}–${y1})`;
+    const heatmapTitle=`🗓 Calendar Heatmap (${y0}–${y1})`;
 
     // Helper: standard chart card
     const box=(id,title,h=260)=>`
@@ -121,12 +155,12 @@ function _buildRightPanelShell(city){
         ${box('tempChart','Distribution of Daily Max Temperature',220)}
         ${box('chart-boxplot','🌡️ Temperature Distribution — Last 4 Seasons',260)}
         ${box('chart-qq','📈 Q-Q Plot (Normality Test)',260)}
-        ${box('chart-timeseries','📆 Full Time Series (2020–2026)',260)}
-        ${box('chart-decomp','🔬 Seasonal Decomposition',340)}
-        ${box('chart-yoy','📊 Year-over-Year Temperature',320)}
+        ${box('chart-timeseries',tsTitle,260)}
+        ${box('chart-decomp',decompTitle,340)}
+        ${box('chart-yoy',yoyTitle,320)}
 
         <div class="bg-gray-900/40 p-6 rounded-3xl border border-gray-800 w-full">
-            <h3 class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">🗓 Calendar Heatmap</h3>
+            <h3 class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">${heatmapTitle}</h3>
             <div style="overflow-x:auto;width:100%;"><canvas id="chart-heatmap"></canvas></div>
         </div>
 
@@ -292,7 +326,7 @@ function chart4_TimeSeries(city,histFull){
             {label:'35°C',data:labels.map(()=>35),borderColor:'rgba(255,0,0,0.45)',borderWidth:1.2,borderDash:[4,4],pointRadius:0,fill:false,order:1},
             {label:'0°C',data:labels.map(()=>0),borderColor:'rgba(66,165,245,0.35)',borderWidth:1,borderDash:[3,3],pointRadius:0,fill:false,order:1},
         ]},
-        options:base({animation:{duration:0},elements:{point:{radius:0}},plugins:darkPlugins(`Full Time Series — ${city}`,'Light=daily · Dark=30-day avg'),scales:darkScales('','°C')})
+        options:base({animation:{duration:0},elements:{point:{radius:0}},plugins:darkPlugins(`Full Time Series — ${city}`,`${FOCUS_YEAR_START}–${FOCUS_YEAR_END} · Light=daily · Dark=30-day avg`),scales:darkScales('','°C')})
     });
 }
 
@@ -333,7 +367,7 @@ function chart5_Decomposition(city,histFull){
             {label:'Seasonal',data:seasonal,borderColor:'#66BB6A',borderWidth:1,pointRadius:0,fill:false,tension:0.3},
             {label:'Residual',data:resid,borderColor:'#9ca3af',borderWidth:0.8,pointRadius:0.5,fill:false},
         ]},
-        options:base({animation:{duration:0},plugins:darkPlugins(`Seasonal Decomposition — ${city}`,`Additive model · period=${P}`),scales:darkScales('','°C')})
+        options:base({animation:{duration:0},plugins:darkPlugins(`Seasonal Decomposition — ${city}`,`${FOCUS_YEAR_START}–${FOCUS_YEAR_END} · Additive model · period=${P}`),scales:darkScales('','°C')})
     });
 }
 
@@ -361,7 +395,7 @@ function chart6_YearOverYear(city,histFull){
         data:{labels:doys,datasets:years.map((yr,i)=>({label:yr,data:doys.map(d=>byY[yr][d]??null),borderColor:pal[i%pal.length],borderWidth:1.5,pointRadius:0,tension:0.3,fill:false}))},
         options:base({
             animation:{duration:0},
-            plugins:darkPlugins(`Year-over-Year — ${city}`,'Mean temperature by day of year'),
+            plugins:darkPlugins(`Year-over-Year — ${city}`,`${FOCUS_YEAR_START}–${FOCUS_YEAR_END} · Mean temperature by day of year`),
             scales:{
                 x:{ticks:{color:DARK.tickColor,font:{size:8},callback:val=>{const i=mTicks.indexOf(val+1);return i>=0?mNames[i]:'';},maxRotation:0},grid:{color:DARK.gridColor},title:{display:true,text:'Day of Year',color:DARK.titleColor,font:{size:9}}},
                 y:{min:yMin-2,max:yMax+2,ticks:{color:DARK.tickColor,font:{size:9}},grid:{color:DARK.gridColor},title:{display:true,text:'Mean Temp (°C)',color:DARK.titleColor,font:{size:9}}}
