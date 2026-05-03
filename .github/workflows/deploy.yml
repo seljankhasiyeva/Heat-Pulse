@@ -1,0 +1,52 @@
+name: Deploy Heat Pulse Frontend
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install duckdb
+
+      - name: Generate static JSON
+        run: python web/backend/generate_static.py
+
+      - name: Prepare Frontend Data
+        run: |
+          mkdir -p ./web/frontend/src/data
+          cp ./web/backend/data_web/static_cities.json ./web/frontend/src/data/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Frontend Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './web/frontend/src'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
