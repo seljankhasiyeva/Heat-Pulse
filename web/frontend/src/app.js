@@ -1,11 +1,8 @@
-// ── 1. Qlobal Dəyişənlər ──────────────────────────────────────────────────
 let globalData   = [];
 let geoLayer     = null;
 let colorfulMode = false;
 let tempChartInst   = null;
 let energyChartInst = null;
-
-// ── Xəritəni başlat ───────────────────────────────────────────────────────
 const map = L.map('map', { zoomControl: false }).setView([40.4093, 49.8671], 7);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; OpenStreetMap', maxZoom: 19
@@ -18,13 +15,11 @@ const smallIcon = L.icon({
     shadowSize: [25, 25]
 });
 
-// ── DOM Elementləri ───────────────────────────────────────────────────────
 const sidebar     = document.getElementById('sidebar');
 const overlay     = document.getElementById('overlay');
 const searchInput = document.getElementById('map-search');
 const modeBtn     = document.getElementById('toggle-mode');
 
-// ── Statik JSON-dan şəhər listini çək ────────────────────────────────────
 async function fetchWeatherData() {
     try {
         const res  = await fetch('data/static_cities.json');
@@ -36,7 +31,6 @@ async function fetchWeatherData() {
     }
 }
 
-// ── Marker-ləri xəritəyə əlavə et ────────────────────────────────────────
 function displayCities(cities) {
     cities.forEach(city => {
         const marker = L.marker([city.lat, city.lon], { icon: smallIcon }).addTo(map);
@@ -47,7 +41,6 @@ function displayCities(cities) {
     });
 }
 
-// ── Sidebar-ı aç və datanı doldur ─────────────────────────────────────────
 function openDetails(city) {
     sidebar.classList.remove('-translate-x-full');
     overlay.classList.remove('hidden');
@@ -78,7 +71,6 @@ function openDetails(city) {
     }, 520);
 }
 
-// ── Sol panel render funksiyaları ─────────────────────────────────────────
 function renderWeatherSection(cityName, w) {
     const icon = getWeatherIcon(w.condition);
     document.getElementById('weather-section').innerHTML = `
@@ -150,7 +142,6 @@ function renderMetricsSection(m, e) {
     `;
 }
 
-// ── 30 günlük Hava cədvəli ────────────────────────────────────────────────
 function renderForecastTable(fc) {
     const container = document.getElementById('forecast-table-container');
     if (!container || !fc || fc.length === 0) return;
@@ -191,7 +182,6 @@ function impactColor(score) {
     return 'text-green-400';
 }
 
-// ── 30 günlük Enerji cədvəli ──────────────────────────────────────────────
 function renderEnergyTable(ef) {
     const container = document.getElementById('energy-table-container');
     if (!container || !ef || ef.length === 0) return;
@@ -214,7 +204,6 @@ function renderEnergyTable(ef) {
         </table>`;
 }
 
-// ── Chart.js ──────────────────────────────────────────────────────────────
 function initCharts(fc, ef, histTemps) {
     if (tempChartInst)   { tempChartInst.destroy();   tempChartInst   = null; }
     if (energyChartInst) { energyChartInst.destroy(); energyChartInst = null; }
@@ -325,7 +314,6 @@ function chartOptions(title, stacked=false) {
     };
 }
 
-// ── Yükləmə göstəricisi ───────────────────────────────────────────────────
 function setLoadingState() {
     ['weather-section', 'impact-section', 'metrics-section'].forEach(id => {
         const el = document.getElementById(id);
@@ -335,7 +323,6 @@ function setLoadingState() {
     });
 }
 
-// ── Colorful Mode ─────────────────────────────────────────────────────────
 const azerbaijanGeoJSON = {
     type:"FeatureCollection",features:[{type:"Feature",properties:{name:"Azerbaijan"},
     geometry:{type:"MultiPolygon",coordinates:[[[[44.7,39.7],[45.1,39.6],[45.9,39.2],[46.5,38.8],[47.5,38.4],[48.6,38.4],
@@ -360,13 +347,11 @@ async function toggleColorfulMode() {
     }
 }
 
-// ── Sidebar Bağla ─────────────────────────────────────────────────────────
 function closeSidebar() {
     sidebar.classList.add('-translate-x-full');
     overlay.classList.add('hidden');
 }
 
-// ── Event Listeners ───────────────────────────────────────────────────────
 if (overlay)     overlay.addEventListener('click', closeSidebar);
 if (modeBtn)     modeBtn.addEventListener('click', toggleColorfulMode);
 if (searchInput) searchInput.addEventListener('input', e => {
@@ -375,7 +360,6 @@ if (searchInput) searchInput.addEventListener('input', e => {
     if (found) map.flyTo([found.lat, found.lon], 9, { duration:1 });
 });
 
-// ── Admin Panel (deaktiv — GitHub Pages-də backend yoxdur) ────────────────
 const adminBtn   = document.getElementById('admin-btn');
 const adminModal = document.getElementById('admin-modal');
 const closeAdmin = document.getElementById('close-admin');
@@ -391,6 +375,5 @@ if (adminForm) {
     };
 }
 
-// ── Başlat ────────────────────────────────────────────────────────────────
 setTimeout(() => { map.invalidateSize(); }, 400);
 fetchWeatherData();

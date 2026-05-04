@@ -1,6 +1,3 @@
-// ── weather-icons.js ─────────────────────────────────────────────────────
-// Hər condition üçün animasiyalı SVG ikon qaytarır
-
 const WEATHER_ICONS = {
 
     "Clear Sky": `
@@ -262,21 +259,14 @@ const WEATHER_ICONS = {
     </svg>`,
 };
 
-// Alias-lar (JSON-dən gələn condition adları match olsun)
 WEATHER_ICONS["Sunny"]           = WEATHER_ICONS["Clear Sky"];
 WEATHER_ICONS["Clear"]           = WEATHER_ICONS["Clear Sky"];
 WEATHER_ICONS["Partly Cloudy"]   = WEATHER_ICONS["Cloudy-Sunny"];
 WEATHER_ICONS["Cloudy-Sunny"]    = WEATHER_ICONS["Cloudy-Sunny"];
 
-/**
- * Condition adına görə ikon SVG string qaytarır.
- * Tapılmasa default olaraq "Cloudy" qaytarır.
- */
 function getWeatherIcon(condition) {
     if (!condition) return WEATHER_ICONS["Cloudy"];
-    // Tam uyğunluq
     if (WEATHER_ICONS[condition]) return WEATHER_ICONS[condition];
-    // Partial match (məsələn "Heavy Rain" → Rain)
     const lower = condition.toLowerCase();
     if (lower.includes("thunder")) return WEATHER_ICONS["Thunderstorm"];
     if (lower.includes("snow"))    return WEATHER_ICONS["Snowfall"];

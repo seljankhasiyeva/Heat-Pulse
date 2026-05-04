@@ -41,7 +41,6 @@
             background: #030712 !important;
         }
 
-        /* Cədvəl scroll */
         .table-scroll {
             max-height: 280px;
             overflow-y: auto;
@@ -55,10 +54,8 @@
 
 <body class="overflow-hidden text-gray-100">
 
-    <!-- Xəritə -->
     <div id="map"></div>
 
-    <!-- Header -->
     <header class="ui-overlay fixed top-0 left-0 w-full p-8 flex justify-between items-center">
         <div>
             <h1 class="text-4xl font-black italic tracking-tighter leading-none flex items-center">
@@ -85,28 +82,20 @@
     <div id="overlay"
         class="fixed inset-0 bg-black/60 backdrop-blur-md z-[1500] hidden transition-opacity duration-500"></div>
 
-    <!-- ═══════════════════════════════════════════════════════════════
-         SİDEBAR  (Sol %30 + Sağ %70)
-    ════════════════════════════════════════════════════════════════ -->
     <div id="sidebar"
         class="fixed top-0 left-0 h-full w-[85%] bg-[#0b0f19] text-white transform -translate-x-full transition-transform duration-500 z-[2000] flex shadow-2xl">
 
-        <!-- ── SOL PANEL (%30) ─────────────────────────────── -->
         <div class="w-[28%] min-w-[220px] border-r border-gray-800 p-8 flex flex-col justify-between bg-[#0d121f] overflow-y-auto">
 
-            <!-- Hava xülasəsi -->
             <div id="weather-section" class="space-y-4"></div>
 
-            <!-- Impact Score -->
             <div id="impact-section" class="py-10 border-y border-gray-800/50"></div>
 
-            <!-- Model metriklər + Enerji cəmi -->
             <div id="metrics-section" class="space-y-3">
                 <h4 class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Model Reliability</h4>
             </div>
         </div>
 
-        <!-- ── SAĞ PANEL (%70) ─────────────────────────────── -->
         <div class="flex-1 p-8 bg-black/20 overflow-y-auto space-y-10">
 
             <h2 class="text-2xl font-bold italic opacity-50 uppercase tracking-tighter">
@@ -131,7 +120,6 @@
 
         </div>
 
-        <!-- Bağla düyməsi -->
         <button onclick="closeSidebar()"
             class="absolute top-6 right-6 text-gray-500 hover:text-white transition-colors z-10">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -140,17 +128,15 @@
         </button>
     </div>
 
-    <!-- Admin Düyməsi -->
-    <button id="admin-btn"
+    <!-- <button id="admin-btn"
         class="fixed bottom-8 right-8 z-[2500] bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl hover:bg-red-600 transition-all shadow-2xl group">
         <svg class="w-6 h-6 text-white group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
             <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
         </svg>
-    </button>
+    </button> -->
 
-    <!-- Admin Modal -->
     <div id="admin-modal"
         class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[3000] hidden items-center justify-center p-4">
         <div class="bg-gray-950 border border-gray-800 w-full max-w-md rounded-3xl p-8 shadow-2xl relative">
@@ -191,7 +177,6 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Chart.js (əvvəl yüklənməlidir ki, app.js istifadə edə bilsin) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="weather-icons.js"></script>
     <script src="charts.js"></script>

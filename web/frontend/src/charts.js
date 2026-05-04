@@ -47,10 +47,8 @@ function darkPlugins(title='',sub=''){
         tooltip:{mode:'index',intersect:false}
     };
 }
-// Every Chart.js chart must have these two — fills the container div
 function base(extra={}){return{responsive:true,maintainAspectRatio:false,...extra};}
 
-/** Son tarixdən geriyə n təqvim ili (hər ilin 1 Yanvardan): ən yeni il daxil olmaqla. */
 function filterHistLastNYears(rows,nYears){
     if(!rows||!rows.length||nYears<1)return rows||[];
     const ts=[];
@@ -67,7 +65,6 @@ function filterHistLastNYears(rows,nYears){
     });
 }
 
-/** Yalnız bu illər arası (hər iki tərəf daxil) — time series / decomp / YoY / heatmap. */
 function filterHistInclusiveYearRange(rows,y0,y1){
     if(!rows||!rows.length)return[];
     return rows.filter(r=>{
@@ -82,9 +79,6 @@ const HIST_WINDOW_YEARS=6;
 const FOCUS_YEAR_START=2025;
 const FOCUS_YEAR_END=2026;
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  MASTER ENTRY
-// ══════════════════════════════════════════════════════════════════════════════
 function renderAllCharts(apiResult){
     _destroyAll();
     window.__lastApiResult=apiResult||{};
@@ -112,9 +106,6 @@ function renderAllCharts(apiResult){
     },50);
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  SHELL — no tables, all charts full-width
-// ══════════════════════════════════════════════════════════════════════════════
 function _buildRightPanelShell(city){
     const panel=document.querySelector('#sidebar .flex-1');
     if(!panel)return;
@@ -124,7 +115,6 @@ function _buildRightPanelShell(city){
     const yoyTitle=`📊 Year-over-Year Temperature (${y0}–${y1})`;
     const heatmapTitle=`🗓 Calendar Heatmap (${y0}–${y1})`;
 
-    // Helper: standard chart card
     const box=(id,title,h=260)=>`
         <div class="bg-gray-900/40 p-6 rounded-3xl border border-gray-800 w-full">
             ${title?`<h3 class="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">${title}</h3>`:''}
@@ -184,11 +174,8 @@ function _buildRightPanelShell(city){
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  CHART 1 helper — called from app.js initCharts()
-//  Fix: title color changed from '#4b5563' (black) to '#9ca3af' (light grey)
-//  Fix: maintainAspectRatio:false added
 // ══════════════════════════════════════════════════════════════════════════════
-// (initCharts lives in app.js — we patch it by overriding chartTitleColor)
-const CHART1_TITLE_COLOR = '#9ca3af';  // app.js reads this constant
+const CHART1_TITLE_COLOR = '#9ca3af';  
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  CHART 2 — Seasonal Boxplot
@@ -332,7 +319,6 @@ function chart4_TimeSeries(city,histFull){
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  CHART 5 — Seasonal Decomposition
-//  FIX: min data reduced to 14 (not 365) so 30-day fallback also works
 // ══════════════════════════════════════════════════════════════════════════════
 function chart5_Decomposition(city,histFull){
     const ctx=document.getElementById('chart-decomp');if(!ctx)return;
