@@ -77,7 +77,6 @@ async def get_detailed_analytics(city_name: str):
         ]
         latest = forecast_30[0] if forecast_30 else {}
 
-        # ── Enerji proqnozu ──────────────────────────────────────────────────
         hourly_rows = energy_locations.get(energy_key, [])
 
         metrics = {}
@@ -107,14 +106,12 @@ async def get_detailed_analytics(city_name: str):
         total_wind  = round(sum(e["wind"]  for e in energy_30), 2)
         total_solar = round(sum(e["solar"] for e in energy_30), 2)
 
-        # ── DuckDB tarixi data ───────────────────────────────────────────────
         hist_temps, hist_full = [], []
 
         if os.path.exists(DB_PATH):
             try:
                 conn = duckdb.connect(DB_PATH, read_only=True)
 
-                # Sütun adlarını yoxla — humidity mövcuddursa istifadə et
                 raw_cols = [r[0] for r in conn.execute(
                     "SELECT column_name FROM information_schema.columns "
                     "WHERE table_schema='raw' AND table_name='raw_historical'"
